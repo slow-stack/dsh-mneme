@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { createStore } from "../src/store.js";
 import { createService } from "../src/service.js";
 import { createSummarizer, parseSummaryJson, parsePeakSpec, isInPeakWindow, nextOffPeakAt } from "../src/summarize.js";
@@ -45,7 +48,7 @@ function fakeClock(start) {
 }
 
 function setup(over = {}, opts = {}) {
-  const store = createStore(":memory:");
+  const store = opts.store ?? createStore(":memory:");
   const service = createService({ store, mirror: null, config: {} });
   const events = [];
   const calls = [];
@@ -423,6 +426,94 @@ test("does not call the LLM when no event was added after the last successful se
   assert.equal(ranges[1][0], 2, "the successful event seq is passed as the next snapshot lower bound");
 });
 
+test("resumes a persisted seq cursor after the summarizer is restarted", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "dsh-mneme-distill-cursor-"));
+  const dbPath = join(dir, "memory.db");
+  let firstStore;
+  let firstSummarizer;
+  let secondStore;
+  let secondSummarizer;
+  try {
+    firstStore = createStore(dbPath);
+    const first = setup({ distillRateLimitIntervalMs: 0 }, { store: firstStore });
+    firstSummarizer = first.summarizer;
+    const session = {
+      id: "s-restart",
+      requestHeader: () => ({ config: { provider: "deepseek", model: "deepseek-chat" } }),
+      events: [userMessage("重启前的窗口", 1), { seq: 2, type: "turn/end" }]
+    };
+    const firstHandler = first.events.find((e) => e.name === "session/event").fn;
+    await firstHandler(session, { seq: 2, type: "turn/end" });
+    assert.equal(first.calls.length, 1);
+    assert.equal(firstStore.getDistillCursor("s-restart").last_seq, 2);
+
+    firstSummarizer.dispose();
+    firstStore.close();
+    firstSummarizer = undefined;
+    firstStore = undefined;
+
+    secondStore = createStore(dbPath);
+    const second = setup({ distillRateLimitIntervalMs: 0 }, { store: secondStore });
+    secondSummarizer = second.summarizer;
+    const secondHandler = second.events.find((e) => e.name === "session/event").fn;
+    await secondHandler(session, { seq: 2, type: "turn/end" });
+
+    assert.equal(second.calls.length, 0, "a restarted summarizer must reuse the persisted cursor");
+    assert.equal(secondStore.count(), 2, "the restart must not duplicate memories");
+    assert.equal(secondStore.getDistillCursor("s-restart").last_seq, 2);
+  } finally {
+    secondSummarizer?.dispose();
+    secondStore?.close();
+    firstSummarizer?.dispose();
+    firstStore?.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("treats a valid empty summary as a successful cursor commit", async () => {
+  const { events, store, calls } = setup(
+    { distillRateLimitIntervalMs: 0 },
+    { stream: streamOf([]) }
+  );
+  const handler = events.find((e) => e.name === "session/event").fn;
+  const session = {
+    id: "s-empty-summary",
+    requestHeader: () => ({ config: { provider: "deepseek", model: "deepseek-chat" } }),
+    events: [userMessage("这一轮没有可保存的长期记忆", 1), { seq: 2, type: "turn/end" }]
+  };
+
+  await handler(session, { seq: 2, type: "turn/end" });
+  assert.equal(calls.length, 1);
+  assert.equal(store.count(), 0);
+  assert.equal(store.getDistillCursor(session.id).last_seq, 2);
+
+  await handler(session, { seq: 2, type: "turn/end" });
+  assert.equal(calls.length, 1, "a valid empty summary must consume the window once");
+});
+
+test("advances the cursor to the window end for mixed valid and invalid entries", async () => {
+  const valid = { type: "history", title: "有效摘要", content: "只保存这一条", importance: 3 };
+  const { events, store, calls } = setup(
+    { distillRateLimitIntervalMs: 0 },
+    { stream: streamOf([valid, { type: "unknown", title: "无效摘要", content: "忽略" }, null]) }
+  );
+  const handler = events.find((e) => e.name === "session/event").fn;
+  const session = {
+    id: "s-mixed-summary",
+    requestHeader: () => ({ config: { provider: "deepseek", model: "deepseek-chat" } }),
+    events: [userMessage("混合摘要窗口", 1), { seq: 2, type: "assistant/message" }, { seq: 3, type: "turn/end" }]
+  };
+
+  await handler(session, { seq: 3, type: "turn/end" });
+  assert.equal(calls.length, 1);
+  assert.equal(store.count(), 1);
+  assert.equal(store.all()[0].title, valid.title);
+  assert.equal(store.getDistillCursor(session.id).last_seq, 3);
+
+  await handler(session, { seq: 3, type: "turn/end" });
+  assert.equal(calls.length, 1, "a mixed summary must consume the window once");
+});
+
 test("distills only new seq events and keeps the recent tail when a window exceeds distillMaxChars", async () => {
   const { events, calls } = setup(
     { distillMaxChars: 80, distillRateLimitIntervalMs: 0 },
@@ -654,15 +745,53 @@ test("rolls back partial memory writes so retrying a failed window does not dupl
   await handler(session, { seq: 2, type: "turn/end" });
   assert.equal(calls.length, 1);
   assert.equal(store.count(), 0, "a failed write transaction must leave no partial memory");
+  assert.equal(store.getDistillCursor("s-partial-write"), undefined, "a failed write must not advance the cursor");
 
   await handler(session, { seq: 2, type: "turn/end" });
   assert.equal(calls.length, 2, "the failed seq window must be retried");
   assert.equal(store.count(), 2);
+  assert.equal(store.getDistillCursor("s-partial-write").last_seq, 2);
   assert.equal(store.all().find((memory) => memory.title === "第一条")?.content, "第一条内容");
 
   await handler(session, { seq: 2, type: "turn/end" });
   assert.equal(calls.length, 2, "a successfully retried window must not be distilled again");
   assert.equal(store.count(), 2);
+});
+
+test("rolls back memory writes when persisting the cursor fails", async () => {
+  const { events, store, service, calls } = setup(
+    { distillRateLimitIntervalMs: 0 },
+    { stream: streamOf([{ type: "history", title: "游标失败", content: "事务应回滚", importance: 3 }]) }
+  );
+  const originalSetCursor = service.setDistillCursor.bind(service);
+  let failOnce = true;
+  service.setDistillCursor = (sessionId, lastSeq) => {
+    if (failOnce) {
+      failOnce = false;
+      throw new Error("simulated cursor write failure");
+    }
+    return originalSetCursor(sessionId, lastSeq);
+  };
+  const handler = events.find((e) => e.name === "session/event").fn;
+  const session = {
+    id: "s-cursor-write-failure",
+    requestHeader: () => ({ config: { provider: "deepseek", model: "deepseek-chat" } }),
+    events: [userMessage("游标写入失败也不能丢窗口", 1), { seq: 2, type: "turn/end" }]
+  };
+
+  await handler(session, { seq: 2, type: "turn/end" });
+  assert.equal(calls.length, 1);
+  assert.equal(store.count(), 0, "cursor failure must roll back the memory write");
+  assert.equal(store.getDistillCursor(session.id), undefined);
+  const failedAudit = service.listLlmAudits({ source: "autoSummarize" }).find(
+    (audit) => audit.error_message === "simulated cursor write failure"
+  );
+  assert.equal(failedAudit?.status, "error", "cursor failure must not be audited as success");
+
+  await handler(session, { seq: 2, type: "turn/end" });
+  assert.equal(calls.length, 2, "the failed cursor window must be retryable");
+  assert.equal(store.count(), 1);
+  assert.equal(store.getDistillCursor(session.id).last_seq, 2);
 });
 
 test("uses summarizeProvider/summarizeModel config override when set", async () => {

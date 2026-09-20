@@ -16,6 +16,15 @@ test("createStore initializes schema and opens db", () => {
     "SELECT name FROM sqlite_master WHERE type='table' AND name='memories'"
   ).get();
   assert.ok(row, "memories table exists");
+  const cursorTable = store.db.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='distill_cursors'"
+  ).get();
+  assert.ok(cursorTable, "distill cursor table exists");
+  assert.equal(store.getDistillCursor("session-1"), undefined);
+  const saved = store.setDistillCursor("session-1", 4);
+  assert.equal(saved.last_seq, 4);
+  assert.ok(saved.updated_at);
+  assert.equal(store.setDistillCursor("session-1", 2).last_seq, 4, "cursor never moves backwards");
   store.close();
 });
 
@@ -173,6 +182,10 @@ test("schema migration adds archived column to legacy database", () => {
     const store = createStore(dbPath);
     const cols = store.db.prepare("PRAGMA table_info(memories)").all().map((c) => c.name);
     assert.ok(cols.includes("archived"), "archived column added");
+    const cursorTable = store.db.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='distill_cursors'"
+    ).get();
+    assert.ok(cursorTable, "new cursor table is created for legacy databases");
     store.close();
   } finally {
     rmSync(dir, { recursive: true, force: true });

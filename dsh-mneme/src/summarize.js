@@ -405,6 +405,19 @@ export function createSummarizer(ctx, service, config, deps = {}) {
     }
   }
 
+  function persistCursor(sessionId, nextSeq) {
+    if (!Number.isFinite(nextSeq)) return;
+    if (typeof service.setDistillCursor !== "function") {
+      throw new Error("dsh-mneme: persistent summarization cursors are unavailable");
+    }
+    service.setDistillCursor(sessionId, nextSeq);
+  }
+
+  function commitCursor(sessionId, nextSeq) {
+    persistCursor(sessionId, nextSeq);
+    if (Number.isFinite(nextSeq)) lastDistilledSeq.set(sessionId, nextSeq);
+  }
+
   /**
    * Issue #239（第 4 项）：把这一轮蒸馏推迟到最近的「高峰结束」时刻。每会话只挂
    * 一个定时器（重复触发不叠加）；被 summarizePeakMaxDeferMinutes 截断时到点照跑
@@ -500,7 +513,10 @@ export function createSummarizer(ctx, service, config, deps = {}) {
     let abortedRun = false;
     try {
       if (!route) return;
-      const previousSeq = lastDistilledSeq.get(session.id);
+      const persistedCursor = typeof service.getDistillCursor === "function"
+        ? service.getDistillCursor(session.id)
+        : undefined;
+      const previousSeq = persistedCursor?.last_seq ?? lastDistilledSeq.get(session.id);
       const triggerSeq = eventSeq(triggerEvent);
       // 只读取上次成功游标之后、当前 turn/end 之前的事件。旧版 snapshotEvents
       // 即使忽略范围参数，collectMessages 仍会按事件 seq 二次过滤。
@@ -519,7 +535,7 @@ export function createSummarizer(ctx, service, config, deps = {}) {
       if (!collected.messages.length) {
         // 没有可蒸馏的公开文本也算成功消费当前事件窗口，避免每个 turn/end
         // 都重新扫描同一批无内容事件；没有 seq 时则不提交不可验证的游标。
-        if (Number.isFinite(nextSeq)) lastDistilledSeq.set(session.id, nextSeq);
+        commitCursor(session.id, nextSeq);
         return;
       }
       const messages = collected.messages;
@@ -536,7 +552,7 @@ export function createSummarizer(ctx, service, config, deps = {}) {
           0
         );
         if (distillChars < minWindowChars) {
-          if (Number.isFinite(nextSeq)) lastDistilledSeq.set(session.id, nextSeq);
+          commitCursor(session.id, nextSeq);
           writeAudit({
             timestamp: new Date().toISOString(),
             model_id: route ? `${route.provider}:${route.model}` : "unknown",
@@ -712,7 +728,11 @@ export function createSummarizer(ctx, service, config, deps = {}) {
               ...(dup ? { _mergeInto: dup.memory.id } : {})
             });
           }
+          persistCursor(session.id, nextSeq);
         });
+      } else {
+        // 空数组是合法成功：没有记忆写入，但本次事件窗口仍然应被持久消费。
+        persistCursor(session.id, nextSeq);
       }
       if (audit && (capped > 0 || deduped > 0)) {
         audit.metadata = {
@@ -724,6 +744,12 @@ export function createSummarizer(ctx, service, config, deps = {}) {
       // 记忆写入和解析都成功后才提交窗口；流失败、中止、解析失败或写入异常
       // 都会在此之前退出，从而保留窗口供下一次重试。
       if (Number.isFinite(nextSeq)) lastDistilledSeq.set(session.id, nextSeq);
+    } catch (error) {
+      if (audit) {
+        audit.status = "error";
+        audit.errorMessage = String(error?.message ?? error);
+      }
+      throw error;
     } finally {
       // Issue #127：aborted（会话关闭 / 插件 dispose）不占间隔，避免误伤该会话的
       // 下一次蒸馏；其余情况（含失败）的打点保留，与 dreamMinIntervalMinutes 一致。

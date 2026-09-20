@@ -197,6 +197,14 @@ CREATE TABLE IF NOT EXISTS llm_audit_logs (
 CREATE INDEX IF NOT EXISTS idx_llm_audit_timestamp ON llm_audit_logs(timestamp);
 CREATE INDEX IF NOT EXISTS idx_llm_audit_source ON llm_audit_logs(trigger_source);
 
+-- autoSummarize 的增量蒸馏游标：按 session.id 持久化最近一次成功消费的事件序。
+-- 游标是蒸馏窗口的恢复事实，不与 user_settings 或记忆内容混用。
+CREATE TABLE IF NOT EXISTS distill_cursors (
+  session_id TEXT PRIMARY KEY,
+  last_seq   INTEGER NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 -- entity gene (v0.3.0): named entities mentioned across memories, with
 -- time-boxed attributes (valid_from → valid_until) and typed relations.
 -- Attributes follow the snapshot style: saveAttr invalidates the previous
@@ -787,6 +795,37 @@ export function createStore(path) {
     }
     lastTs = ts;
     return ts;
+  }
+
+  /** 返回指定会话持久化的 autoSummarize 游标；不存在时返回 undefined。 */
+  function getDistillCursor(sessionId) {
+    if (typeof sessionId !== "string" || sessionId.length === 0) return undefined;
+    const row = db.prepare(
+      "SELECT session_id, last_seq, updated_at FROM distill_cursors WHERE session_id = ?"
+    ).get(sessionId);
+    return row
+      ? { session_id: row.session_id, last_seq: Number(row.last_seq), updated_at: row.updated_at }
+      : undefined;
+  }
+
+  /**
+   * 单调持久化会话游标。调用方若同时写入记忆，必须放在外层 SQLite 事务内。
+   */
+  function setDistillCursor(sessionId, lastSeq) {
+    if (typeof sessionId !== "string" || sessionId.length === 0) {
+      throw new TypeError("setDistillCursor: sessionId must be a non-empty string");
+    }
+    if (!Number.isSafeInteger(lastSeq)) {
+      throw new TypeError("setDistillCursor: lastSeq must be a safe integer");
+    }
+    db.prepare(`
+      INSERT INTO distill_cursors (session_id, last_seq, updated_at)
+      VALUES (?, ?, ?)
+      ON CONFLICT(session_id) DO UPDATE SET
+        last_seq = MAX(distill_cursors.last_seq, excluded.last_seq),
+        updated_at = excluded.updated_at
+    `).run(sessionId, lastSeq, nowIso());
+    return getDistillCursor(sessionId);
   }
 
   function count(type, { minImportance = null, source = null, includeForgotten = false, includeArchived = false, onlyArchived = false, depositedOnly = false, updatedFrom = null, updatedTo = null, occurredFrom = null, occurredTo = null, visibility = null } = {}) {
@@ -2461,6 +2500,8 @@ export function createStore(path) {
     getRecallEval,
     listRecallEvals,
     saveLlmAudit,
+    getDistillCursor,
+    setDistillCursor,
     listLlmAudits,
     countLlmAudits,
     getLlmAuditStats,

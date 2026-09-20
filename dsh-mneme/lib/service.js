@@ -2120,6 +2120,8 @@ export function createService({ store, mirror, config, onWrite, logger }) {
     toApiList,
     isVisibleInScope,
     transaction,
+    getDistillCursor: (sessionId) => store.getDistillCursor(sessionId),
+    setDistillCursor: (sessionId, lastSeq) => store.setDistillCursor(sessionId, lastSeq),
     enqueue,
     setDreamHook(fn) { dreamHook = fn; },
     setSleepHook(fn) { sleepHook = fn; },
