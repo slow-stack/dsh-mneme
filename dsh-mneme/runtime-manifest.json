@@ -1,18 +1,14 @@
 {
   "manifestVersion": 2,
   "entry": "@huggingface/transformers",
-  "transformersVersion": "4.2.0",
+  "transformersVersion": "4.3.0",
   "excluded": {
-    "onnxruntime-web": "Node 构建从不 import 它（打桩验证：嵌入结果逐字节相同）"
+    "onnxruntime-web": "Node 构建从不 import 它（打桩验证：嵌入结果逐字节相同）",
+    "@img/sharp-freebsd-wasm32": "FreeBSD 专用 WASM 回退，覆盖平台之外",
+    "@img/sharp-webcontainers-wasm32": "WebContainers 专用 WASM 回退，覆盖平台之外",
+    "@img/sharp-wasm32": "无 os 约束的 WASM 回退，Node 构建从不 import"
   },
   "packages": [
-    {
-      "name": "@emnapi/runtime",
-      "version": "1.11.3",
-      "rel": "@emnapi/runtime",
-      "integrity": "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==",
-      "tarball": "https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.11.3.tgz"
-    },
     {
       "name": "@huggingface/jinja",
       "version": "0.5.10",
@@ -22,17 +18,17 @@
     },
     {
       "name": "@huggingface/tokenizers",
-      "version": "0.1.3",
+      "version": "0.2.0",
       "rel": "@huggingface/tokenizers",
-      "integrity": "sha512-8rF/RRT10u+kn7YuUbUg0OF30K8rjTc78aHpxT+qJ1uWSqxT1MHi8+9ltwYfkFYJzT/oS+qw3JVfHtNMGAdqyA==",
-      "tarball": "https://registry.npmjs.org/@huggingface/tokenizers/-/tokenizers-0.1.3.tgz"
+      "integrity": "sha512-LidMHe1FpcSYH4vcSjXooda34pC0M8m1gmDOv7SQi6Iv+ib1zX7J3sHBCC9/3FPCkn2k1b55FneVqMRxrr99pg==",
+      "tarball": "https://registry.npmjs.org/@huggingface/tokenizers/-/tokenizers-0.2.0.tgz"
     },
     {
       "name": "@huggingface/transformers",
-      "version": "4.2.0",
+      "version": "4.3.0",
       "rel": "@huggingface/transformers",
-      "integrity": "sha512-8BRCoBMH0XsWaEIamuR0LrJGAfftgHAfb2Vrffy0VKlSAE/MnUJ5/h/zTfEP3fDIft+nk7TqB8xXEyABGitBjQ==",
-      "tarball": "https://registry.npmjs.org/@huggingface/transformers/-/transformers-4.2.0.tgz"
+      "integrity": "sha512-fL1A/WUZwouPrOlYxU5dzIwD2T5J781JiB2jDR8bFe5DwCj0Gfudq+NEXCMno49kQgajHA7xQkrRLJlqG1veEA==",
+      "tarball": "https://registry.npmjs.org/@huggingface/transformers/-/transformers-4.3.0.tgz"
     },
     {
       "name": "@img/colour",
@@ -43,10 +39,10 @@
     },
     {
       "name": "@img/sharp-darwin-arm64",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-darwin-arm64",
-      "integrity": "sha512-imtQ3WMJXbMY4fxb/Ndp6HBTNVtWCUI0WdobyheGf5+ad6xX8VIDO8u2xE4qc/fr08CKG/7dDseFtn6M6g/r3w==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-darwin-arm64/-/sharp-darwin-arm64-0.34.5.tgz",
+      "integrity": "sha512-Uhfl4V4lhP2nbUVF9+hyH1+luj86f1gUFeo8ALYxFoULoU+G87D43BfeMP8XHsk9boxAnCY/bf2EHwhA7MuGsA==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-darwin-arm64/-/sharp-darwin-arm64-0.35.4.tgz",
       "os": [
         "darwin"
       ],
@@ -56,10 +52,10 @@
     },
     {
       "name": "@img/sharp-darwin-x64",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-darwin-x64",
-      "integrity": "sha512-YNEFAF/4KQ/PeW0N+r+aVVsoIY0/qxxikF2SWdp+NRkmMB7y9LBZAVqQ4yhGCm/H3H270OSykqmQMKLBhBJDEw==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-darwin-x64/-/sharp-darwin-x64-0.34.5.tgz",
+      "integrity": "sha512-hWniXY3bG5qKpkKrAwPe4y+VTPmf086YQAnkxWh7uA1YrlRouWGa0M0Mxj3ZjnXFkv7/TD1bTy9lGUK26vRvWw==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-darwin-x64/-/sharp-darwin-x64-0.35.4.tgz",
       "os": [
         "darwin"
       ],
@@ -69,10 +65,10 @@
     },
     {
       "name": "@img/sharp-libvips-darwin-arm64",
-      "version": "1.2.4",
+      "version": "1.3.3",
       "rel": "@img/sharp-libvips-darwin-arm64",
-      "integrity": "sha512-zqjjo7RatFfFoP0MkQ51jfuFZBnVE2pRiaydKJ1G/rHZvnsrHAOcQALIi9sA5co5xenQdTugCvtb1cuf78Vf4g==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-darwin-arm64/-/sharp-libvips-darwin-arm64-1.2.4.tgz",
+      "integrity": "sha512-suTBPTDGrI9WodccaDdwZItTSaBYASlBk1NSfElSHrUfzu3szG6lvIF58+WiFvnfzuK8ZBFS5zE00PxqxnRiPg==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-darwin-arm64/-/sharp-libvips-darwin-arm64-1.3.3.tgz",
       "os": [
         "darwin"
       ],
@@ -82,10 +78,10 @@
     },
     {
       "name": "@img/sharp-libvips-darwin-x64",
-      "version": "1.2.4",
+      "version": "1.3.3",
       "rel": "@img/sharp-libvips-darwin-x64",
-      "integrity": "sha512-1IOd5xfVhlGwX+zXv2N93k0yMONvUlANylbJw1eTah8K/Jtpi15KC+WSiaX/nBmbm2HxRM1gZ0nSdjSsrZbGKg==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-darwin-x64/-/sharp-libvips-darwin-x64-1.2.4.tgz",
+      "integrity": "sha512-FVJZ5mITMobmXIz/hPDTw0EintTW5H3WfrxwLqEqjiIihlu+hVRyGrFQ60xl0Lxn7Bt3zdpevPaQi0HEzqz9fw==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-darwin-x64/-/sharp-libvips-darwin-x64-1.3.3.tgz",
       "os": [
         "darwin"
       ],
@@ -95,10 +91,10 @@
     },
     {
       "name": "@img/sharp-libvips-linux-arm",
-      "version": "1.2.4",
+      "version": "1.3.3",
       "rel": "@img/sharp-libvips-linux-arm",
-      "integrity": "sha512-bFI7xcKFELdiNCVov8e44Ia4u2byA+l3XtsAj+Q8tfCwO6BQ8iDojYdvoPMqsKDkuoOo+X6HZA0s0q11ANMQ8A==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-arm/-/sharp-libvips-linux-arm-1.2.4.tgz",
+      "integrity": "sha512-3rbU4vqXXc3hY/OiXdl52xZvT0F1yEngWfvqudtPJg/KkyiaQw2DRsFrNzpmLvfavbwOq3qXn36GP8obHRULQA==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-arm/-/sharp-libvips-linux-arm-1.3.3.tgz",
       "os": [
         "linux"
       ],
@@ -111,10 +107,10 @@
     },
     {
       "name": "@img/sharp-libvips-linux-arm64",
-      "version": "1.2.4",
+      "version": "1.3.3",
       "rel": "@img/sharp-libvips-linux-arm64",
-      "integrity": "sha512-excjX8DfsIcJ10x1Kzr4RcWe1edC9PquDRRPx3YVCvQv+U5p7Yin2s32ftzikXojb1PIFc/9Mt28/y+iRklkrw==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-arm64/-/sharp-libvips-linux-arm64-1.2.4.tgz",
+      "integrity": "sha512-0DaL0A6Xu6sQSQFwe4iVCrKWU2cCTItnRsYsCdxAMm9NF6twAA9BKnoqy4hqz4+azQ0JHuA26qiUKsf1XJ/v5A==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-arm64/-/sharp-libvips-linux-arm64-1.3.3.tgz",
       "os": [
         "linux"
       ],
@@ -127,10 +123,10 @@
     },
     {
       "name": "@img/sharp-libvips-linux-ppc64",
-      "version": "1.2.4",
+      "version": "1.3.3",
       "rel": "@img/sharp-libvips-linux-ppc64",
-      "integrity": "sha512-FMuvGijLDYG6lW+b/UvyilUWu5Ayu+3r2d1S8notiGCIyYU/76eig1UfMmkZ7vwgOrzKzlQbFSuQfgm7GYUPpA==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-ppc64/-/sharp-libvips-linux-ppc64-1.2.4.tgz",
+      "integrity": "sha512-cdn1OvUBwsXhbC0zSzJnNzf5MZ/mTrobawDvNXBTxe8VtqKAm0sRuEY2Evzovb/w9JMk4TvRxqt1mekSuJz64w==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-ppc64/-/sharp-libvips-linux-ppc64-1.3.3.tgz",
       "os": [
         "linux"
       ],
@@ -143,10 +139,10 @@
     },
     {
       "name": "@img/sharp-libvips-linux-riscv64",
-      "version": "1.2.4",
+      "version": "1.3.3",
       "rel": "@img/sharp-libvips-linux-riscv64",
-      "integrity": "sha512-oVDbcR4zUC0ce82teubSm+x6ETixtKZBh/qbREIOcI3cULzDyb18Sr/Wcyx7NRQeQzOiHTNbZFF1UwPS2scyGA==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-riscv64/-/sharp-libvips-linux-riscv64-1.2.4.tgz",
+      "integrity": "sha512-HjPVx7yKz+0lqdhDlTw1tt90wamBoxhiXpvl1XZpJLiHH4RCJ5yDTqH+VlYPv2fwFs89JFw4c1IexYOcQUi4IQ==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-riscv64/-/sharp-libvips-linux-riscv64-1.3.3.tgz",
       "os": [
         "linux"
       ],
@@ -159,10 +155,10 @@
     },
     {
       "name": "@img/sharp-libvips-linux-s390x",
-      "version": "1.2.4",
+      "version": "1.3.3",
       "rel": "@img/sharp-libvips-linux-s390x",
-      "integrity": "sha512-qmp9VrzgPgMoGZyPvrQHqk02uyjA0/QrTO26Tqk6l4ZV0MPWIW6LTkqOIov+J1yEu7MbFQaDpwdwJKhbJvuRxQ==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-s390x/-/sharp-libvips-linux-s390x-1.2.4.tgz",
+      "integrity": "sha512-neWLh+3yCNThxnfy3c4BbVBeGgt9aftno+XbT56iK28RgeDs3UOFWviLWlUu0bArYVYJaFDK+RRohbicUNCm8Q==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-s390x/-/sharp-libvips-linux-s390x-1.3.3.tgz",
       "os": [
         "linux"
       ],
@@ -175,10 +171,10 @@
     },
     {
       "name": "@img/sharp-libvips-linux-x64",
-      "version": "1.2.4",
+      "version": "1.3.3",
       "rel": "@img/sharp-libvips-linux-x64",
-      "integrity": "sha512-tJxiiLsmHc9Ax1bz3oaOYBURTXGIRDODBqhveVHonrHJ9/+k89qbLl0bcJns+e4t4rvaNBxaEZsFtSfAdquPrw==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-x64/-/sharp-libvips-linux-x64-1.2.4.tgz",
+      "integrity": "sha512-4vKmvAst9nrowcqquKFAyZJUDolUaIp8uRiN0mWFguJ1IplC9/pitXtlnnlU4aa/eJw3J7i67V+pwUL+wZGdsA==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linux-x64/-/sharp-libvips-linux-x64-1.3.3.tgz",
       "os": [
         "linux"
       ],
@@ -191,10 +187,10 @@
     },
     {
       "name": "@img/sharp-libvips-linuxmusl-arm64",
-      "version": "1.2.4",
+      "version": "1.3.3",
       "rel": "@img/sharp-libvips-linuxmusl-arm64",
-      "integrity": "sha512-FVQHuwx1IIuNow9QAbYUzJ+En8KcVm9Lk5+uGUQJHaZmMECZmOlix9HnH7n1TRkXMS0pGxIJokIVB9SuqZGGXw==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-arm64/-/sharp-libvips-linuxmusl-arm64-1.2.4.tgz",
+      "integrity": "sha512-Y9kQaLMuNoB0bPYOOdcZMaseNrFpPodIWWMrx+CZyydf2xn68j9WYc6sWWRrDwNkzCQjKYfc68L7jKjGlHMibw==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-arm64/-/sharp-libvips-linuxmusl-arm64-1.3.3.tgz",
       "os": [
         "linux"
       ],
@@ -207,10 +203,10 @@
     },
     {
       "name": "@img/sharp-libvips-linuxmusl-x64",
-      "version": "1.2.4",
+      "version": "1.3.3",
       "rel": "@img/sharp-libvips-linuxmusl-x64",
-      "integrity": "sha512-+LpyBk7L44ZIXwz/VYfglaX/okxezESc6UxDSoyo2Ks6Jxc4Y7sGjpgU9s4PMgqgjj1gZCylTieNamqA1MF7Dg==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-x64/-/sharp-libvips-linuxmusl-x64-1.2.4.tgz",
+      "integrity": "sha512-fj8Mv0HHfD1Rr+4I68+3agJynxDWtBFgicTbSOb9Bke6pIwzGcJ+RX/yHjmiEGFMCavY/dxvem7MyNaJF+wDiw==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-x64/-/sharp-libvips-linuxmusl-x64-1.3.3.tgz",
       "os": [
         "linux"
       ],
@@ -223,10 +219,10 @@
     },
     {
       "name": "@img/sharp-linux-arm",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-linux-arm",
-      "integrity": "sha512-9dLqsvwtg1uuXBGZKsxem9595+ujv0sJ6Vi8wcTANSFpwV/GONat5eCkzQo/1O6zRIkh0m/8+5BjrRr7jDUSZw==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-linux-arm/-/sharp-linux-arm-0.34.5.tgz",
+      "integrity": "sha512-7OAS8gI0EReKGVN2HssHlM6umJgxF5VI3xN0p9FA91p/YO+ou5hiNghLdZ5BEHztwaaK5+bLKRf8x/o2L2nk9A==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-linux-arm/-/sharp-linux-arm-0.35.4.tgz",
       "os": [
         "linux"
       ],
@@ -239,10 +235,10 @@
     },
     {
       "name": "@img/sharp-linux-arm64",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-linux-arm64",
-      "integrity": "sha512-bKQzaJRY/bkPOXyKx5EVup7qkaojECG6NLYswgktOZjaXecSAeCWiZwwiFf3/Y+O1HrauiE3FVsGxFg8c24rZg==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-linux-arm64/-/sharp-linux-arm64-0.34.5.tgz",
+      "integrity": "sha512-De4jpEnAU8Hd5oT0j1G3uL4ZvTuipVMn7YC6vPaJhy6/7EwEae0SVAoBrUMYQbkLGDm85taVWwuPc1a44LTzCQ==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-linux-arm64/-/sharp-linux-arm64-0.35.4.tgz",
       "os": [
         "linux"
       ],
@@ -255,10 +251,10 @@
     },
     {
       "name": "@img/sharp-linux-ppc64",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-linux-ppc64",
-      "integrity": "sha512-7zznwNaqW6YtsfrGGDA6BRkISKAAE1Jo0QdpNYXNMHu2+0dTrPflTLNkpc8l7MUP5M16ZJcUvysVWWrMefZquA==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-linux-ppc64/-/sharp-linux-ppc64-0.34.5.tgz",
+      "integrity": "sha512-2oYZJeIl4kCcMGk4ouZVjnkCtFrpQFlNEtJ6GbxzhHQchwH0NH/qEb9ykmOl29dqwMq+JhFdZn+1ak2FKhI9fQ==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-linux-ppc64/-/sharp-linux-ppc64-0.35.4.tgz",
       "os": [
         "linux"
       ],
@@ -271,10 +267,10 @@
     },
     {
       "name": "@img/sharp-linux-riscv64",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-linux-riscv64",
-      "integrity": "sha512-51gJuLPTKa7piYPaVs8GmByo7/U7/7TZOq+cnXJIHZKavIRHAP77e3N2HEl3dgiqdD/w0yUfiJnII77PuDDFdw==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-linux-riscv64/-/sharp-linux-riscv64-0.34.5.tgz",
+      "integrity": "sha512-cPbNChoRURAWdebDIHSenxRpgEdy7JkPydSnUxRm9VvKD7m0/xVaR/8Fzlu81pk5nHEvHH87UZUA7cTtwnbJSA==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-linux-riscv64/-/sharp-linux-riscv64-0.35.4.tgz",
       "os": [
         "linux"
       ],
@@ -287,10 +283,10 @@
     },
     {
       "name": "@img/sharp-linux-s390x",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-linux-s390x",
-      "integrity": "sha512-nQtCk0PdKfho3eC5MrbQoigJ2gd1CgddUMkabUj+rBevs8tZ2cULOx46E7oyX+04WGfABgIwmMC0VqieTiR4jg==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-linux-s390x/-/sharp-linux-s390x-0.34.5.tgz",
+      "integrity": "sha512-RY0JFY8Fd6RonCBtHz+DvadaPkXDSI1AUn6yWL9TipqkZ1vY8w8evqdgyDFnkm4/K1ve1TvZiaePP5oSd4+WVQ==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-linux-s390x/-/sharp-linux-s390x-0.35.4.tgz",
       "os": [
         "linux"
       ],
@@ -303,10 +299,10 @@
     },
     {
       "name": "@img/sharp-linux-x64",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-linux-x64",
-      "integrity": "sha512-MEzd8HPKxVxVenwAa+JRPwEC7QFjoPWuS5NZnBt6B3pu7EG2Ge0id1oLHZpPJdn3OQK+BQDiw9zStiHBTJQQQQ==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-linux-x64/-/sharp-linux-x64-0.34.5.tgz",
+      "integrity": "sha512-9qvvEAuk8k89TfWUoX2htWjbAMX8p+NxCppjpcg5k6xMsjhBQPTsoIh36h9Qde4WRuGpJeYnOjdosDn/cnv+OA==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-linux-x64/-/sharp-linux-x64-0.35.4.tgz",
       "os": [
         "linux"
       ],
@@ -319,10 +315,10 @@
     },
     {
       "name": "@img/sharp-linuxmusl-arm64",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-linuxmusl-arm64",
-      "integrity": "sha512-fprJR6GtRsMt6Kyfq44IsChVZeGN97gTD331weR1ex1c1rypDEABN6Tm2xa1wE6lYb5DdEnk03NZPqA7Id21yg==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-linuxmusl-arm64/-/sharp-linuxmusl-arm64-0.34.5.tgz",
+      "integrity": "sha512-KB5jxpfWQTr0nc3xdHtWChdbifHrBGsd2SM62Eyxrl8afikm+f5qGBU75SJIZBT/S1MC8XyacdlXBMSWq6OURA==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-linuxmusl-arm64/-/sharp-linuxmusl-arm64-0.35.4.tgz",
       "os": [
         "linux"
       ],
@@ -335,10 +331,10 @@
     },
     {
       "name": "@img/sharp-linuxmusl-x64",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-linuxmusl-x64",
-      "integrity": "sha512-Jg8wNT1MUzIvhBFxViqrEhWDGzqymo3sV7z7ZsaWbZNDLXRJZoRGrjulp60YYtV4wfY8VIKcWidjojlLcWrd8Q==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-linuxmusl-x64/-/sharp-linuxmusl-x64-0.34.5.tgz",
+      "integrity": "sha512-f+eZJZIQNEEd26RPSW+76chwOf1XtA2Y/O+5ocVyLliHkeih3e+jhLVBdNTd2rS3IbNXK8+ug93Vf5ZXtF5Lxg==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-linuxmusl-x64/-/sharp-linuxmusl-x64-0.35.4.tgz",
       "os": [
         "linux"
       ],
@@ -350,21 +346,11 @@
       ]
     },
     {
-      "name": "@img/sharp-wasm32",
-      "version": "0.34.5",
-      "rel": "@img/sharp-wasm32",
-      "integrity": "sha512-OdWTEiVkY2PHwqkbBI8frFxQQFekHaSSkUIJkwzclWZe64O1X4UlUjqqqLaPbUpMOQk6FBu/HtlGXNblIs0huw==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-wasm32/-/sharp-wasm32-0.34.5.tgz",
-      "cpu": [
-        "wasm32"
-      ]
-    },
-    {
       "name": "@img/sharp-win32-arm64",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-win32-arm64",
-      "integrity": "sha512-WQ3AgWCWYSb2yt+IG8mnC6Jdk9Whs7O0gxphblsLvdhSpSTtmu69ZG1Gkb6NuvxsNACwiPV6cNSZNzt0KPsw7g==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-win32-arm64/-/sharp-win32-arm64-0.34.5.tgz",
+      "integrity": "sha512-iNdlBX9gLVvqe2I3uIJSIKTq6wckP/DYxZtcqxm09x5Gi24DnFBmPAWZmr60ZyYMG0xlzo6goG3670ar+RXvRw==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-win32-arm64/-/sharp-win32-arm64-0.35.4.tgz",
       "os": [
         "win32"
       ],
@@ -374,10 +360,10 @@
     },
     {
       "name": "@img/sharp-win32-ia32",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-win32-ia32",
-      "integrity": "sha512-FV9m/7NmeCmSHDD5j4+4pNI8Cp3aW+JvLoXcTUo0IqyjSfAZJ8dIUmijx1qaJsIiU+Hosw6xM5KijAWRJCSgNg==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-win32-ia32/-/sharp-win32-ia32-0.34.5.tgz",
+      "integrity": "sha512-kqRsbaa5CS6KHlpxnN7WhE6vAAugXyZButpRdvDWetlv6Qv4N9WTcrWzF7tXfB9T7MsoadqdI8hmwLq6UlLvtw==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-win32-ia32/-/sharp-win32-ia32-0.35.4.tgz",
       "os": [
         "win32"
       ],
@@ -387,10 +373,10 @@
     },
     {
       "name": "@img/sharp-win32-x64",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "@img/sharp-win32-x64",
-      "integrity": "sha512-+29YMsqY2/9eFEiW93eqWnuLcWcufowXewwSNIT6UwZdUUCrM3oFjMWH/Z6/TMmb4hlFenmfAVbpWeup2jryCw==",
-      "tarball": "https://registry.npmjs.org/@img/sharp-win32-x64/-/sharp-win32-x64-0.34.5.tgz",
+      "integrity": "sha512-XtmnYhBcrORsJ4XJngyzr/EWP0hRZLAZRFaApdKuviyqF78+ylxh2y06ZmtULAMOnObJ3ucpN0AcwSWnMowTRg==",
+      "tarball": "https://registry.npmjs.org/@img/sharp-win32-x64/-/sharp-win32-x64-0.35.4.tgz",
       "os": [
         "win32"
       ],
@@ -400,17 +386,10 @@
     },
     {
       "name": "adm-zip",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "rel": "adm-zip",
-      "integrity": "sha512-XleryMhbuksdKtofnWZ9Sk+4CUTbms4Mb/EU32SZwToAyZ5RgVos/ki8n+yr0LWHOGKuakbXTuuYNHLQjhddgg==",
-      "tarball": "https://registry.npmjs.org/adm-zip/-/adm-zip-0.6.0.tgz"
-    },
-    {
-      "name": "boolean",
-      "version": "3.2.0",
-      "rel": "boolean",
-      "integrity": "sha512-d0II/GO9uf9lfUHH2BQsjxzRJZBdsjgsBiW4BvhWk/3qoKwQFjIDVN19PfX8F2D/r9PCMTtLWjYVCFrpeYUzsw==",
-      "tarball": "https://registry.npmjs.org/boolean/-/boolean-3.2.0.tgz"
+      "integrity": "sha512-Xwrja8nx9e5o2N1my4DsKCeKpdrnACyr1wtbPxBDgGzKzKyE9kRtBFA8mWldI+RVlD7CBZNWY/wQ2+ydwOR6kQ==",
+      "tarball": "https://registry.npmjs.org/adm-zip/-/adm-zip-0.6.1.tgz"
     },
     {
       "name": "define-data-property",
@@ -434,13 +413,6 @@
       "tarball": "https://registry.npmjs.org/detect-libc/-/detect-libc-2.1.2.tgz"
     },
     {
-      "name": "detect-node",
-      "version": "2.1.0",
-      "rel": "detect-node",
-      "integrity": "sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g==",
-      "tarball": "https://registry.npmjs.org/detect-node/-/detect-node-2.1.0.tgz"
-    },
-    {
       "name": "es-define-property",
       "version": "1.0.1",
       "rel": "es-define-property",
@@ -455,13 +427,6 @@
       "tarball": "https://registry.npmjs.org/es-errors/-/es-errors-1.3.0.tgz"
     },
     {
-      "name": "es6-error",
-      "version": "4.1.1",
-      "rel": "es6-error",
-      "integrity": "sha512-Um/+FxMr9CISWh0bi5Zv0iOD+4cFh5qLeks1qhAopKVAJw3drgKbKySikp7wGhDL0HPeaja0P5ULZrxLkniUVg==",
-      "tarball": "https://registry.npmjs.org/es6-error/-/es6-error-4.1.1.tgz"
-    },
-    {
       "name": "escape-string-regexp",
       "version": "4.0.0",
       "rel": "escape-string-regexp",
@@ -470,10 +435,10 @@
     },
     {
       "name": "global-agent",
-      "version": "3.0.0",
+      "version": "4.1.3",
       "rel": "global-agent",
-      "integrity": "sha512-PT6XReJ+D07JvGoxQMkT6qji/jVNfX/h364XHZOWeRzy64sSFr+xJ5OX7LI3b4MPQzdL4H8Y8M0xzPpsVMwA8Q==",
-      "tarball": "https://registry.npmjs.org/global-agent/-/global-agent-3.0.0.tgz"
+      "integrity": "sha512-KUJEViiuFT3I97t+GYMikLPJS2Lfo/S2F+DQuBWzuzaMPnvt5yyZePzArx36fBzpGTxZjIpDbXLeySLgh+k76g==",
+      "tarball": "https://registry.npmjs.org/global-agent/-/global-agent-4.1.3.tgz"
     },
     {
       "name": "globalthis",
@@ -497,18 +462,11 @@
       "tarball": "https://registry.npmjs.org/has-property-descriptors/-/has-property-descriptors-1.0.2.tgz"
     },
     {
-      "name": "json-stringify-safe",
-      "version": "5.0.1",
-      "rel": "json-stringify-safe",
-      "integrity": "sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==",
-      "tarball": "https://registry.npmjs.org/json-stringify-safe/-/json-stringify-safe-5.0.1.tgz"
-    },
-    {
       "name": "matcher",
-      "version": "3.0.0",
+      "version": "4.0.0",
       "rel": "matcher",
-      "integrity": "sha512-OkeDaAZ/bQCxeFAozM55PKcKU0yJMPGifLwV4Qgjitu+5MoAfSQN4lsLJeXZ1b8w0x+/Emda6MZgXS1jvsapng==",
-      "tarball": "https://registry.npmjs.org/matcher/-/matcher-3.0.0.tgz"
+      "integrity": "sha512-S6x5wmcDmsDRRU/c2dkccDwQPXoFczc5+HpQ2lON8pnvHlnvHAHj5WlLVvw6n6vNyHuVugYrFohYxbS+pvFpKQ==",
+      "tarball": "https://registry.npmjs.org/matcher/-/matcher-4.0.0.tgz"
     },
     {
       "name": "object-keys",
@@ -519,29 +477,22 @@
     },
     {
       "name": "onnxruntime-common",
-      "version": "1.24.3",
+      "version": "1.30.0",
       "rel": "onnxruntime-common",
-      "integrity": "sha512-GeuPZO6U/LBJXvwdaqHbuUmoXiEdeCjWi/EG7Y1HNnDwJYuk6WUbNXpF6luSUY8yASul3cmUlLGrCCL1ZgVXqA==",
-      "tarball": "https://registry.npmjs.org/onnxruntime-common/-/onnxruntime-common-1.24.3.tgz"
+      "integrity": "sha512-7fdVWjAID1dVhH/G8qK3APARunV4VkBFoCQAP7qp4Wkab0mrorvmc+sqiT+mKXOzDqdjN5j+/Z9nb4gzNPWcyA==",
+      "tarball": "https://registry.npmjs.org/onnxruntime-common/-/onnxruntime-common-1.30.0.tgz"
     },
     {
       "name": "onnxruntime-node",
-      "version": "1.24.3",
+      "version": "1.30.0",
       "rel": "onnxruntime-node",
-      "integrity": "sha512-JH7+czbc8ALA819vlTgcV+Q214/+VjGeBHDjX81+ZCD0PCVCIFGFNtT0V4sXG/1JXypKPgScQcB3ij/hk3YnTg==",
-      "tarball": "https://registry.npmjs.org/onnxruntime-node/-/onnxruntime-node-1.24.3.tgz",
+      "integrity": "sha512-twhs1C2C/BFkz1yc5OY0KIU2GUq6DURO7hD4bx5Q2Qy3nAMJwRXW8xU3NVczE29VA9lolLOYepoD8fjTGOfIqw==",
+      "tarball": "https://registry.npmjs.org/onnxruntime-node/-/onnxruntime-node-1.30.0.tgz",
       "os": [
         "win32",
         "darwin",
         "linux"
       ]
-    },
-    {
-      "name": "roarr",
-      "version": "2.15.4",
-      "rel": "roarr",
-      "integrity": "sha512-CHhPh+UNHD2GTXNYhPWLnU8ONHdI+5DI+4EYIAOaiD63rHeYlZvyh8P+in5999TTSFgUYuKUAjzRI4mdh/p+2A==",
-      "tarball": "https://registry.npmjs.org/roarr/-/roarr-2.15.4.tgz"
     },
     {
       "name": "semver",
@@ -551,46 +502,25 @@
       "tarball": "https://registry.npmjs.org/semver/-/semver-7.8.5.tgz"
     },
     {
-      "name": "semver-compare",
-      "version": "1.0.0",
-      "rel": "semver-compare",
-      "integrity": "sha512-YM3/ITh2MJ5MtzaM429anh+x2jiLVjqILF4m4oyQB18W7Ggea7BfqdH/wGMK7dDiMghv/6WG7znWMwUDzJiXow==",
-      "tarball": "https://registry.npmjs.org/semver-compare/-/semver-compare-1.0.0.tgz"
-    },
-    {
       "name": "serialize-error",
-      "version": "7.0.1",
+      "version": "8.1.0",
       "rel": "serialize-error",
-      "integrity": "sha512-8I8TjW5KMOKsZQTvoxjuSIa7foAwPWGOts+6o7sgjz41/qMD9VQHEDxi6PBvK2l0MXUmqZyNpUK+T2tQaaElvw==",
-      "tarball": "https://registry.npmjs.org/serialize-error/-/serialize-error-7.0.1.tgz"
+      "integrity": "sha512-3NnuWfM6vBYoy5gZFvHiYsVbafvI9vZv/+jlIigFn4oP4zjNPK3LhcY0xSCgeb1a5L8jO71Mit9LlNoi2UfDDQ==",
+      "tarball": "https://registry.npmjs.org/serialize-error/-/serialize-error-8.1.0.tgz"
     },
     {
       "name": "sharp",
-      "version": "0.34.5",
+      "version": "0.35.4",
       "rel": "sharp",
-      "integrity": "sha512-Ou9I5Ft9WNcCbXrU9cMgPBcCK8LiwLqcbywW3t4oDV37n1pzpuNLsYiAV8eODnjbtQlSDwZ2cUEeQz4E54Hltg==",
-      "tarball": "https://registry.npmjs.org/sharp/-/sharp-0.34.5.tgz"
-    },
-    {
-      "name": "sprintf-js",
-      "version": "1.1.3",
-      "rel": "sprintf-js",
-      "integrity": "sha512-Oo+0REFV59/rz3gfJNKQiBlwfHaSESl1pcGyABQsnnIfWOFt6JNj5gCog2U6MLZ//IGYD+nA8nI+mTShREReaA==",
-      "tarball": "https://registry.npmjs.org/sprintf-js/-/sprintf-js-1.1.3.tgz"
-    },
-    {
-      "name": "tslib",
-      "version": "2.8.1",
-      "rel": "tslib",
-      "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
-      "tarball": "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz"
+      "integrity": "sha512-n++8XWcj+jCOr2IOl7h8LbKnGBDY4aPbmprMONBNFdn0ImXqpGVv5zliDs0V9HbmbCQLpbuo2ej9rAoOQTvMDA==",
+      "tarball": "https://registry.npmjs.org/sharp/-/sharp-0.35.4.tgz"
     },
     {
       "name": "type-fest",
-      "version": "0.13.1",
+      "version": "0.20.2",
       "rel": "type-fest",
-      "integrity": "sha512-34R7HTnG0XIJcBSn5XhDd7nNFPRcXYRZrBB2O2jdKqYODldSzBAqzsWoZYYvduky73toYS/ESqxPvkDf/F0XMg==",
-      "tarball": "https://registry.npmjs.org/type-fest/-/type-fest-0.13.1.tgz"
+      "integrity": "sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==",
+      "tarball": "https://registry.npmjs.org/type-fest/-/type-fest-0.20.2.tgz"
     }
   ]
 }

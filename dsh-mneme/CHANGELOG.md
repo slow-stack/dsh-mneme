@@ -28,6 +28,8 @@
 
 ## 🧪 工程
 
+- **依赖告警清零（GitHub code-scanning 四条 open）**：`@huggingface/transformers` 4.2.0 → **4.3.0**（其 sharp 依赖声明升至 `^0.35.4`，消掉 sharp 的两条 high——path 处理与 DoS），`package.json` overrides 的 `adm-zip` 0.6.0 → **0.6.1**（消掉 adm-zip 的 high + medium 各一条；两者均处 devDependency 链——本地嵌入运行时构建面，npm 用户装不到）。连带项：runtime-manifest 闭包在 sharp 0.35 下新走到无 `os` 约束的 `@img/sharp-wasm32` 及 freebsd/webcontainers 两个 WASM 回退包（Node 构建从不 import），按 onnxruntime-web 先例加入 `scripts/build-runtime-manifest.mjs` 的 EXCLUDED 并重生成清单；`test/runtime-manifest.test.js` 的 payloadId 断言由硬编码版本号改为取生成器输出本身（锁格式不锁版本，升级不再碎）。`npm audit`（含 dev 与 --omit=dev 双口径）0 vulnerabilities；全量测试 1243/1242 pass/0 fail/1 skip。
+
 - **全工具矩阵的「DTO 键集 ⊆ output schema」系统性断言（issue #195）**：#184（memory_get 内联 schema 漏声明 v0.8.1 的 scope 来源三键 → 任何被标注过的行都过不了 in-process 校验）此前只有单点回归护住 `memory_get` 一个工具，换一个工具、换一个键，同类事故可以原样重演。新增 `test/tools-dto-schema-matrix.test.js`，四层断言各管一段：① 9 个工具每个可安全触达分支的**真实 execute 返回值**过生产同款校验器 `validateJsonSchemaValue`（不写手抄期望值）；② DTO 唯一产地 `toApiList` 在全形态（极简 / 敏感度 / 事件时间 / 单维与全量 scope 标注）下的输出 ⊆ `MEMORY_ITEM_SCHEMA`，并**反向**要求声明里的每个键都被至少一种形态真实产出（死声明会在下次增键时暴露）；③ 全部工具 schema 的结构不变量（闭合、required ⊆ properties、每项带 type——否则前两层会因校验器形同虚设而静默失效）；④ 负例锁：注入未声明键**必须**报错。护栏自证：两次变异测试（删共享 schema 一个键 / 给 memory_get 塞手抄小副本）分别让 2 条与 3 条断言转红。`memory_runtime` 的 provision（联网下载）与 verify 命中载荷（真实加载模型）不在单测内驱动，由 ③ 兜底声明合规。
 
 ## 🏗️ 工程
