@@ -132,6 +132,7 @@ dsh web
 | 文档 | 路径 |
 |------|------|
 | 插件完整文档（功能 / 安装 / 配置 / 架构） | [dsh-mneme/README.md](dsh-mneme/README.md) |
+| stdio MCP server——Claude Code / Cursor 等任意 MCP 客户端接入记忆六件套 | [dsh-mneme/README.md · MCP Server](dsh-mneme/README.md#mcp-server任意-mcp-客户端接入) |
 | 实体结构化设计 | [dsh-mneme/docs/ENTITIES.md](dsh-mneme/docs/ENTITIES.md) |
 | 语义架构 | [dsh-mneme/docs/SEMANTIC.md](dsh-mneme/docs/SEMANTIC.md) |
 | 本地模型部署指南 | [dsh-mneme/docs/LOCAL_MODEL.md](dsh-mneme/docs/LOCAL_MODEL.md) |
@@ -292,6 +293,7 @@ It works out of the box. To feel its value in five minutes:
 | Doc | Path |
 |-----|------|
 | Full plugin docs (features / install / config / architecture) | [dsh-mneme/README.md](dsh-mneme/README.md)（中文） |
+| stdio MCP server — plug the six memory tools into any MCP client (Claude Code / Cursor / …) | [dsh-mneme/README.md · MCP Server](dsh-mneme/README.md#mcp-server任意-mcp-客户端接入)（中文） |
 | Entity structure design | [dsh-mneme/docs/ENTITIES.md](dsh-mneme/docs/ENTITIES.md) |
 | Semantic architecture | [dsh-mneme/docs/SEMANTIC.md](dsh-mneme/docs/SEMANTIC.md) |
 | Local model guide | [dsh-mneme/docs/LOCAL_MODEL.md](dsh-mneme/docs/LOCAL_MODEL.md) |
