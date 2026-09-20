@@ -124,9 +124,10 @@ test("build：平台无关，六个常见平台都能过滤出完整的必需包
       assert.ok((pkg.os ?? []).includes(platform), `${platform}-${arch} 混进了 ${pkg.rel}`);
     }
     // payloadId 由「版本 + 平台」算出来（v2 清单里不再存它）。
+    // 版本取自生成器输出本身：本断言锁的是格式，不是某个具体版本号。
     assert.equal(
       payloadId({ version: built.transformersVersion, platform, arch }),
-      `transformers-4.2.0-node-${platform}-${arch}`
+      `transformers-${built.transformersVersion}-node-${platform}-${arch}`
     );
   }
 });

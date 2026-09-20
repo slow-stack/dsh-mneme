@@ -29,7 +29,14 @@ const ENTRY = "@huggingface/transformers";
  * 嵌入结果逐字节相同：dims=[2,512]、L2 范数 1.0000、cos 0.3053）。而它解包后 127.7MB，占整个
  * 闭包约三分之一。所以清单里剔除它，风险由 verify 的真实推理兜底。
  */
-const EXCLUDED = { "onnxruntime-web": "Node 构建从不 import 它（打桩验证：嵌入结果逐字节相同）" };
+const EXCLUDED = {
+  "onnxruntime-web": "Node 构建从不 import 它（打桩验证：嵌入结果逐字节相同）",
+  // sharp 0.35 起把 WASM 回退包装进 optionalDependencies（freebsd/webcontainers 场景），
+  // 六个覆盖平台在 Node 里从不 import；wasm32 无 os 约束，会混进每个平台的 natives 断言。
+  "@img/sharp-freebsd-wasm32": "FreeBSD 专用 WASM 回退，覆盖平台之外",
+  "@img/sharp-webcontainers-wasm32": "WebContainers 专用 WASM 回退，覆盖平台之外",
+  "@img/sharp-wasm32": "无 os 约束的 WASM 回退，Node 构建从不 import",
+};
 
 /**
  * 被剔除的包，以及**它子树下的一切**。
