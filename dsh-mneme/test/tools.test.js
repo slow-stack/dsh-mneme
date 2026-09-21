@@ -54,7 +54,7 @@ test("registers ten tools with correct names", () => {
   assert.deepEqual(names, ["memory_archive", "memory_delete", "memory_forget", "memory_get", "memory_list", "memory_register_document", "memory_runtime", "memory_save", "memory_search", "memory_update"]);
 });
 
-// v0.8.6 tool-exposure gate: disabling a tool hides it from the model entirely
+// v0.8.5 tool-exposure gate: disabling a tool hides it from the model entirely
 // (it is not registered), which is the reliable lever against over-calling on
 // slow/lightweight models — the injected memory block already covers recall.
 test("disableMemorySearch hides only memory_search", () => {

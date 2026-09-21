@@ -550,7 +550,7 @@ export const Config = z.object({
   // recall_runs 滚动清理保留天数。
   recallRetentionDays: z.natural().min(1).max(3650).default(90),
 
-  // --- tool exposure: 慢模型/轻量模型的工具往返节流（v0.8.6）----------------
+  // --- tool exposure: 慢模型/轻量模型的工具往返节流（v0.8.5）----------------
   // 跨会话记忆已由 inject.js 每轮自动注入系统提示词，memory_search 只用于
   // 「注入里没有、需要深挖」的补充检索；memory_archive 是隐藏/恢复条目的整理
   // 操作，正常会话里很少需要。轻量模型对「何时该用工具」判断弱，容易每轮

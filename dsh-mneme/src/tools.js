@@ -677,7 +677,7 @@ export function createTools(ctx, service, config, embedder) {
     })
   ];
 
-  // Tool-exposure gate (v0.8.6): 跨会话记忆已自动注入，memory_search /
+  // Tool-exposure gate (v0.8.5): 跨会话记忆已自动注入，memory_search /
   // memory_archive 在慢/轻量模型上是多余往返，面板开关可直接隐藏工具——
   // 模型看不到就不会调，比在描述里劝它少调用更可靠。注意：live patch reload
   // 下已注册的工具不会被宿主反注册，排除只对全新会话生效。

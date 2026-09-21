@@ -85,7 +85,7 @@ const FEATURE_FLAG_BOOLEANS = [
   // Issue #17（v0.8.0 A3）：strictScope 硬过滤——他 scope 完全不可见（关闭时
   // 为 A2 软隔离：降权保留可见）。
   "strictScope",
-  // 工具暴露开关（v0.8.6）：记忆已每轮自动注入，memory_search/memory_archive
+  // 工具暴露开关（v0.8.5）：记忆已每轮自动注入，memory_search/memory_archive
   // 在慢/轻量模型上是多余往返，面板可关（默认关=行为不变）。
   "disableMemorySearch",
   "disableMemoryArchive",
