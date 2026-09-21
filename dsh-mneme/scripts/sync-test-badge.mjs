@@ -1,9 +1,12 @@
-// 发版流水线的徽章对齐（release.yml 的 badge job 调用；手动可跑 npm run badge:sync）。
+// 发版前对齐徽章（手动跑 npm run badge:sync；release.yml 不再有 badge job ——
+// main 受保护，github-actions[bot] 的 GITHUB_TOKEN 绕过不了 required status
+// checks，push 必被 GH006 拒）。
 //
 // 做三件事：
-//   1. 跑一遍全量测试（npm test），取最后的 `pass N` 汇总数；
+//   1. 跑一遍全量测试（npm test），取套件总数（`ℹ tests N` 汇总行）；
 //   2. 把双 README 的 tests 徽章（img.shields.io/badge/tests-N%20passed）与
-//      开发命令注释（# N 个测试 / # N tests）刷成该数字；
+//      开发命令注释（# N 个测试 / # 运行 N 个测试 / # N 个 node:test 测试 /
+//      # N tests）刷成该数字；
 //   3. 有变化就写回文件（由调用方决定是否 commit/push），无变化静默退出。
 //
 // 测试失败（fail>0 或进程非零退出）时以非零退出且不改任何文件——徽章永远
@@ -32,11 +35,14 @@ try {
   process.exit(1);
 }
 
-// 2) 取汇总 pass 数（spec reporter 的 `ℹ pass N`；取最后一处防逐用例行干扰）
-const matches = [...output.matchAll(/pass (\d+)/g)];
-const pass = matches.length ? Number(matches[matches.length - 1][1]) : 0;
-if (!pass) {
-  console.error("无法从测试输出解析 pass 数，徽章不更新");
+// 2) 取套件总数（spec reporter 的 `ℹ tests N`；取最后一处防逐用例行干扰）
+//    用总数而非 `pass N`：平台条件跳过的用例（如 Windows 未开开发者模式时的
+//    符号链接断言）在 pass 里不计、在 tests 里计入，而徽章报的是 CI（ubuntu）
+//    口径 —— 用总数则本地在 Windows 跑也得到同一个数，不必手工修。
+const matches = [...output.matchAll(/ℹ tests (\d+)/g)];
+const count = matches.length ? Number(matches[matches.length - 1][1]) : 0;
+if (!count) {
+  console.error("无法从测试输出解析套件总数，徽章不更新");
   process.exit(1);
 }
 
@@ -49,13 +55,13 @@ let changed = 0;
 for (const file of targets) {
   let text = readFileSync(file, "utf8");
   const next = text
-    .replace(/tests-\d+%20passed-/g, `tests-${pass}%20passed-`)
-    .replace(/(#\s*)\d+( 个测试)/g, `$1${pass}$2`)
-    .replace(/(#\s*)\d+( tests)/g, `$1${pass}$2`);
+    .replace(/tests-\d+%20passed-/g, `tests-${count}%20passed-`)
+    .replace(/(#\s*(?:运行\s*)?)\d+( 个(?:\s*node:test)?\s*测试)/g, `$1${count}$2`)
+    .replace(/(#\s*)\d+( tests)/g, `$1${count}$2`);
   if (next !== text) {
     writeFileSync(file, next);
     changed += 1;
     console.log(`updated: ${file}`);
   }
 }
-console.log(`pass=${pass}, files changed=${changed}`);
+console.log(`tests=${count}, files changed=${changed}`);

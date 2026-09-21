@@ -6,9 +6,6 @@ name: CI
 # 2. 新增 src/↔lib/ 一致性守门（scripts/check-sync.js，v0.7.9 引入的发布前校验前置到 CI）。
 # 3. Codecov 只在 ubuntu+node24 一个分片跑一次（覆盖率无需每个组合都传）。
 # 4. node_modules 缓存（cache-dependency-path 指向子目录的 lockfile）。
-# 5. main 徽章对齐 job：把双 README 的 tests 徽章刷成最新全量 pass 数——
-#    复用发版线的 badge:sync（脚本自带「测试不绿不刷徽章」），让数字不再
-#    只在发版时才追平。仅 push 到 main 时跑（PR 上没有可写回的对象）。
 # ⚠️ 需要 package.json 配合一处小改（跨平台通配符）：
 #    dsh-mneme/package.json 的 "test": "node --test test/*.test.js" 在 Windows 的 cmd 下
 #    不展开 glob。建议改为 "test": "node --test test/"（目录模式，全平台等价），
@@ -66,42 +63,3 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: dsh-mneme/coverage/lcov.info
           fail_ci_if_error: false
-
-  # 双 README 的 tests 徽章自动对齐最新全量 pass 数（复用发版线的 badge:sync，
-  # 脚本自带「测试不绿不刷徽章」）。只在 push 到 main 时跑：PR 上跑也刷不回
-  # 基分支，反而拖慢每个 PR；已同步时脚本零改动、job 零提交。
-  badge:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: dsh-mneme/package-lock.json
-
-      - name: Install dependencies
-        working-directory: dsh-mneme
-        run: npm ci
-
-      - name: Sync test badge & counts (runs full suite)
-        working-directory: dsh-mneme
-        run: npm run badge:sync
-
-      - name: Commit & push if changed
-        run: |
-          if git diff --quiet; then
-            echo "badge already in sync — nothing to commit"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add README.md dsh-mneme/README.md
-            git commit -m "chore(readme): 测试徽章自动对齐（CI main，pass 数追平）"
-            git push origin main
-          fi
