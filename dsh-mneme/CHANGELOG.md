@@ -2,14 +2,9 @@
 
 ## [0.8.6] - 2026-09-21
 
-## 🐛 修复
-
-- （待填）
-
-## [Unreleased]
-
 ## 🆕 新增
 
+- **工具暴露开关：`disableMemorySearch` / `disableMemoryArchive` + 工具描述的调用纪律（默认关＝行为不变）**：跨会话记忆已由注入每轮带上，`memory_search` 只在「注入块里没有、需要深挖」时才值得一次串行往返（生成参数 → 执行 → 回填 → 再生成），`memory_archive` 是整理动作、正常会话很少需要——轻量/慢模型对「何时该调」判断弱，容易顺手每轮调一遍。两个开关把对应工具直接从注册表摘掉（模型看不到就不会调，比在描述里劝更可靠），走 feature_flags 白名单、面板可启停＝线上回滚开关；默认关即工具全暴露，隐藏仅对全新会话生效（live patch reload 下宿主不会反注册已注册的工具）。同批收紧两份常驻文案：`memory_search` 描述点明「相关记忆每轮已注入，只在注入块没有所需内容时才搜」，`memory_archive` 描述补「只在用户要求或条目确已过时时归档，不要中途主动整理」。
 - **agent 主动整理接口（issue #231）：dryRun 比对报告 → 判断 → apply，全程留审计**：内聚块 `src/organize.js`，service 层只做依赖注入 + barrel 出口（`service.organize`，一个入口带 mode 参数——`{ mode: "dryRun" | "apply" }`）。按维护者口径只做功能本体：**不进工具列表、不加独立 opt-in 开关**，#249 到位时只差「注册工具 + 注入指引」一步。① `dryRun({ candidates, agent_scope?, workspace_scope?, sensitivity? })`：逐条与库内**同类型同 scope** 的行比对（精确层 = 标题归一后相等；向量层 = `MIN_SIM 0.92`，与 document 的 C2 档和 `findSessionDuplicate` 的 vector 档同源，不在第三个地方发明阈值），产出 `verdict: exact | near | new` 与命中行（含相似度），**不写记忆表**、只落一行 `dream_runs`（`run_type='organize'`）；行扫描与向量读取按 type 缓存，候选硬上限 50 条（整理不是批量导入）。② `apply({ run_id, decisions })`：`save`（走 `saveWithDedupe`，复用常规写路径的镜像/通知/重嵌入语，不另起一套 epilogue）/ `discard`（只进回执）/ `archive`（**筛除 = 归档，绝不物理删除**），整批一个事务；apply 回执行经 `outcome.dry_run_id` 指回它所依据的那份报告，审计可还原「报告 → 判断 → 落地」三步，receipt 走 `buildReceipt`——与 dream 同一格式，`parseReceipt` 可解。三条硬规则都是「宁可什么都不做」形态：dryRun 不写库；apply 必须引用一次真实 dryRun（没有比对过的候选一律不落库，堵死「跳过报告直接写」的绕过路径）；筛除只归档。宽容形态同仓库红线 4：单条非法候选/决策跳过 + 应用合法子集 + run 记 `degraded`（逐条明细进 `skipped` 列），基础设施级错误记 `failed` 并原样上抛——绝不虚报 ok。`document` 候选在 dryRun 即被拦（唯一铸造口是 `registerDocument`，#230）。`dream_runs.run_type` 的注释补第三档 `organize`（列本身无需迁移）。测试 1220 → **1228**。
 - **注入形态（issue #249 第一批）：能力说明 + 约束/偏好分池逐字保真**：两个 opt-in 键，默认关/零，默认档下注入块与既有行为逐字节一致。① `injectGuidanceEnabled`（默认关）——把「怎么用记忆」的判断指引落到两个零注入成本的位置：`memory_search` / `memory_save` 的工具描述尾部各追加一句判断指引（工具描述常驻、不进每轮上下文），以及一段 order 150 的系统提示段（常量文本、`[dsh-mneme memory]` 前缀——常驻段内容必须同会话内稳定，否则每轮变化会作废其后的前缀缓存；宿主不提供 section seam 时静默跳过，能力说明仍落在工具描述上，不算失败）。指引只加在「何时不该用」真有歧义处：`memory_list` / `memory_get` / `memory_update` 的触发是机械的，`memory_register_document`（#230 已内建 `Use for … lookups`）与 `memory_runtime`（已自带 provision 成本告诫）不重复；跨工具的克制判断进总则段——第 5 条点明可逆替代品（`memory_archive` 隐藏、`memory_forget` 只停注入，两者均可恢复）与**不可逆**的 `memory_delete`，这是全 guide 里唯一有数据损失后果的一句（回归测试锁它在场）。指引写**英文单一正本**（新内聚块 `src/guide.js`）：注入指引的三条参照实现（ACP 的 `ACP_SYSTEM_PROMPT` + `HOW_TO_COMPRESS_RULES`、mnemon 的 `ROUTING_GUIDANCE`、宿主压缩摘要规则）全为英文，仓库既有先例也是工具描述硬编码英文，而 `memory.language` 管的是「生成出来的记忆内容与块内标题」，与本模块是两件事——故不并入 `STR`、不做 zh/en 双写（双写只会让两份文本日后漂移）。② `pinnedInjectBudget`（0–5，默认 0 = 关闭）——约束/偏好类进独立 pin 池：不进相关性竞争（取满预算后前置到块内排序之前）、不参与跨轮轮换（也不进轮换历史——每轮固定出现的 pin 若记进去只会占满轮换窗口、挤掉情景候选的新鲜度）、逐字保真（不受 `injectContentMaxChars` 的常规截断，只受 2000 字硬顶：逐字不等于无界，一条超长约束若无上限会每轮把常驻段吃满，超顶照旧带截断提示）。独立预算的意义是 pin 不占 `maxInjectedItems` 名额、也不会把当前任务需要的情景候选挤出去；超预算条数在块内如实标注「另有 N 条未展示」，绝不静默。选路统计经可选出参 `pinnedStats` 透出，`injectCandidates` 的「返回数组」契约不变。待维护者拍板（PR 内说明，本批次不自行决定）：`constraint` 同属 `CODING_MEMORY_TYPES`，非编码任务里已被 `codingGate` 滤掉、pin 池同样拿不到它。测试 1220 → **1228**。
 - **注入预览（issue #179）**：面板状态页新增「注入预览」卡——展示最近一帧 prompt 组装实际注入了什么：条目构成（类型/标题/重要性/字符数）、hot memory 与总体积、生效参数（maxItems / threshold / 自适应条数 / scope / 轮换抑制）。实现走旁路快照：`src/inject.js` 在真实渲染路径上缓存同一份候选与最终文本（`getInjectionSnapshot()`，不二次检索、零额外开销），`GET /api/dsh-mneme/inject-preview` 只读透传，无快照（autoInject 关闭 / 新会话 / 旧宿主）整卡退化为「暂无预览」不猜；注入器卸载即清空快照，不跨生命周期存留。与 #182 的「极简模式注入关闭」提示卡同区呈现，状态页至此覆盖注入可观测性两端：为什么没注入（minimal 压制）+ 注入了什么（本卡）。另含 #178 无障碍批次一（面板 aria-live 播报网络 / 状态卡语义标题 / 弹层焦点圈 / 冲突按钮可区分标签 / ego 图摘要，对比度审计待宿主主题联调）。
@@ -27,6 +22,9 @@
 
 ## 🐛 修复
 
+- **旧版 service 缺游标 API 时降级为内存游标，不再打断每轮蒸馏（#274 回归修复）**：第三方宿主用旧版 service 构造时没有 `setDistillCursor`，此前直接抛错、一轮都蒸不了——改为记一条 warn 后降级为内存游标（#274 之前的行为）：本进程内不重复蒸馏，重启后的窗口重放由 `saveWithDedupe` 的 (type,title,scope) 三元组兜底；**方法存在但抛错仍向上传播**，那是「写失败须回滚」的恰一次语义，两条语义各带回归锁。
+- **蒸馏游标持久化：重启不再重放历史窗口（issue #229）**：新增 `distill_cursors` 表（幂等迁移，按 `session.id` 记最近成功消费的事件序），游标只向前推进——较小 seq 不覆盖已存进度；记忆写入与游标推进同一事务，LLM 失败 / 解析失败 / 中止 / 记忆写入失败 / 游标写入失败任一处出错都保留窗口、回滚并如实记失败审计（此前游标只在内存里，进程重启后历史窗口被重复蒸馏）。
+- **能力说明第 5 条写全 `memory_forget` 的副作用面，`memory_save` 尾句收短（#249 文案精确性）**：原文只写「`memory_forget` 只停注入」，比工具实况窄——它实际让条目从注入、检索结果与列表三处消失，写窄会让模型低估其影响面；改为与 `memory_archive`（从列表 / 检索 / 注入 / 巩固四处隐藏）同口径，回归测试锁完整短语在场。
 - **运行时完整性判据从未生效：状态词对不上，而且结论根本没读（issue #268）**：`verifyPayload` 只认 `integrity.status === "sha512-matched"`，而下载通道在 `mneme-runtime.json` 里记的是 `{status: "verified", checked, detail}`（`src/runtime/download.js`，自 #133 起）——这份结论一喂进来就恒判 `ok:false`，接线即系统性判失败；更根本的是两个生产调用方（`memory_runtime` 的 verify 分支、`scripts/mneme-runtime.mjs` 的 `runVerify`）都只传 `cacheDir`，**这一层在生产路径上从未运行过**：清单里明写的 mismatch 也被静默放过（红测试证实）。附带第二处形状违约：`loader.js` 把清单里的**对象**直接填进 `describeLocalRuntime` 里声明为 `string|null` 的 `integrity` 字段，经免鉴权的 `/api/dsh-mneme/semantic` 外发，CLI `status` 还会把它打印成 `[object Object]`。修法收成一处：新增 `layout.js` 的 `recordedIntegrity()` 归一清单字段的两种形态（对象 / 缺失），判据与投影都只调它——`verifyPayload` 在调用方未显式传结论时读 `describePayload` 已解析的清单，判据同时认 `verified` 与 `sha512-matched`，并把显式 `unverified` 与「没传」同判（原先一个 `ok:true`、一个 `ok:false`）；不一致的结论（含清单里记下的 mismatch）照样判失败。
 
 - **睡眠冲突/模式阶段的输出预算可配（issue #257）**：`src/dream/sleep.js` 冲突消解与模式发现两处 `maxTokens: 2048` 硬编码提为 `sleepMaxTokens`（默认 8192，schema + 整数白名单成对落位，面板可调）。实测依据（报告者 llama.cpp 环境）：默认档 24 对裁决需 2097 token，恰好压在 2048 边界（53 次运行 48 败 5 胜的「间歇性失败」指纹）；`sleepActionSet: full` 六分支实测需 6967（3.4 倍越界）——该档位自 #126 引入起从未跑通过。流式计费按实际用量，调大不增加成本。
@@ -35,13 +33,14 @@
 
 ## 🧪 工程
 
+- **CI 与徽章口径收敛**：tests 徽章改为本地手工对齐（`npm run badge:sync` 自跑全量取套件总数），ci.yml / release.yml 里的 badge job 全部撤除——github-actions[bot] 推不进受保护的 main（GH006），徽章不再由 CI 自动刷；新增安全扫描三件套（gitleaks 全历史密钥扫描 + PR 依赖审查 + OSV 提醒级兜底，warn-first 起步）；仓库 slug 由 modusensus 迁移至 slow-stack（npm scope 与包名不变）。
 - **依赖告警清零（GitHub code-scanning 四条 open）**：`@huggingface/transformers` 4.2.0 → **4.3.0**（其 sharp 依赖声明升至 `^0.35.4`，消掉 sharp 的两条 high——path 处理与 DoS），`package.json` overrides 的 `adm-zip` 0.6.0 → **0.6.1**（消掉 adm-zip 的 high + medium 各一条；两者均处 devDependency 链——本地嵌入运行时构建面，npm 用户装不到）。连带项：runtime-manifest 闭包在 sharp 0.35 下新走到无 `os` 约束的 `@img/sharp-wasm32` 及 freebsd/webcontainers 两个 WASM 回退包（Node 构建从不 import），按 onnxruntime-web 先例加入 `scripts/build-runtime-manifest.mjs` 的 EXCLUDED 并重生成清单；`test/runtime-manifest.test.js` 的 payloadId 断言由硬编码版本号改为取生成器输出本身（锁格式不锁版本，升级不再碎）。`npm audit`（含 dev 与 --omit=dev 双口径）0 vulnerabilities；全量测试 1243/1242 pass/0 fail/1 skip。
 
 - **全工具矩阵的「DTO 键集 ⊆ output schema」系统性断言（issue #195）**：#184（memory_get 内联 schema 漏声明 v0.8.1 的 scope 来源三键 → 任何被标注过的行都过不了 in-process 校验）此前只有单点回归护住 `memory_get` 一个工具，换一个工具、换一个键，同类事故可以原样重演。新增 `test/tools-dto-schema-matrix.test.js`，四层断言各管一段：① 9 个工具每个可安全触达分支的**真实 execute 返回值**过生产同款校验器 `validateJsonSchemaValue`（不写手抄期望值）；② DTO 唯一产地 `toApiList` 在全形态（极简 / 敏感度 / 事件时间 / 单维与全量 scope 标注）下的输出 ⊆ `MEMORY_ITEM_SCHEMA`，并**反向**要求声明里的每个键都被至少一种形态真实产出（死声明会在下次增键时暴露）；③ 全部工具 schema 的结构不变量（闭合、required ⊆ properties、每项带 type——否则前两层会因校验器形同虚设而静默失效）；④ 负例锁：注入未声明键**必须**报错。护栏自证：两次变异测试（删共享 schema 一个键 / 给 memory_get 塞手抄小副本）分别让 2 条与 3 条断言转红。`memory_runtime` 的 provision（联网下载）与 verify 命中载荷（真实加载模型）不在单测内驱动，由 ③ 兜底声明合规。
 
 ## 🏗️ 工程
 
-- 致谢：heptaspirit（#247 注入命中留痕）、davidekingsss（#248 审计记账修复 + #253 审计边界测试）。
+- 致谢：heptaspirit（#247 注入命中留痕 + #267 agent 主动整理接口 + #277 能力说明文案精确性）、davidekingsss（#248 审计记账修复 + #253 审计边界测试）。
 
 ## [0.8.4] - 2026-09-19
 
