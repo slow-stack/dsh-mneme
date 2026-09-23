@@ -2,11 +2,16 @@
 
 ## [0.8.6] - 2026-09-23
 
-## 🐛 修复
+## 🆕 新增
 
-- （待填）
-
-## [Unreleased]
+- **Sleep Mode 与实体抽取接入 LLM 审计（issue #250，#286）**：三条从未记账的后台 LLM 链路补进
+  `llm_audit_logs`——sleep 冲突裁决与模式挖掘（`dream/sleep.js` 有自己的一份 `streamText` 副本，
+  此前漏接 `onUsage`，现按 #242 同口径读 `chunk.usage`）与**每次写入记忆都会触发**的实体抽取
+  （适配器此前没有 `service`，根本无记账能力，补 `service`/`config` 入参）。新增 `operation_type`：
+  `sleep_conflict` / `sleep_pattern` / `entity_extract`，`trigger_source` 记 `sleep` / `entityExtract`。
+  不新增配置键——三条链路共用 `llmAudit.enabled` 一个闸门；审计写失败只 warn、绝不反噬功能本体；
+  顺带修审计诚实性（流式成功但输出无 JSON 时记 `status='error'`，与 dream_runs 不再自相矛盾），
+  README 审计节覆盖面改准（autoDream 实为三次调用）。测试 1277 → **1285**。
 
 ## 🐛 修复
 
@@ -19,7 +24,7 @@
   时刻（run 耗时不应计入下一轮间隔窗口）。回归测试 +5（审计读回与 run_type 过滤、dream/sleep
   重启闸、index.js 接线源码锁 ×2）。
 
-- **本地嵌入对 BGE 系用错池化（静默偏差，不报错）**：`LocalEmbedder.embed()` 对所有本地模型硬编码
+- **本地嵌入对 BGE 系用错池化（静默偏差，不报错，#285）**：`LocalEmbedder.embed()` 对所有本地模型硬编码
   `pooling: "mean"`，但 BGE 系（含默认的 `Xenova/bge-small-zh-v1.5`）是按 **CLS** 训练的——模型自带的
   `1_Pooling/config.json` 明确写着 `pooling_mode_cls_token: true` / `pooling_mode_mean_tokens: false`，
   官方 README 亦为「select the last hidden state of the first token」+ L2 normalize。此前每次嵌入都用了

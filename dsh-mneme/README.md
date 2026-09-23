@@ -260,8 +260,8 @@ v0.3.0 起新增**记忆基因**层：从记忆里抽取**命名实体**、**带
 
 | 版本 | 亮点 |
 |------|------|
+| **v0.8.6** | 可靠性修复批次：autoDream / sleep 的节流与冷却时刻跨重启持久化——调度器 `lastRunAt` 此前只活在内存，进程重启即归零、闸门对新实例放行（#89 实测横跨重启边界的 8.7 / 23.1 分钟连发），现从 `dream_runs` 审计表恢复上次开跑时刻（按 `run_type` 过滤，failed/degraded 也算 run），审计行 `created_at` 同步改记开跑时刻（#291）；Sleep Mode 与实体抽取接入 LLM 审计（#250，#286）；本地嵌入按模型族选池化——BGE 系用 CLS，修 mean 池化造成的静默检索偏差（#285）；1290 测试全绿 |
 | **v0.8.5** | 主动整理 + 注入形态 + 蒸馏可靠性批次：agent 主动整理接口 `service.organize`——`dryRun` 出比对报告（精确层标题归一，向量层 0.92 与 document / session 档同源）→ agent 判断 → `apply` 落库，筛除＝归档不删、同一份报告只许落地一次、全程复用 `dream_runs` 回执（#231/#267，heptaspirit）；注入形态第一批——`injectGuidanceEnabled` 能力说明（工具描述尾句 + order 150 常驻段）与 `pinnedInjectBudget` 约束/偏好 pin 池逐字保真（#249）；注入预览卡 `/inject-preview` 旁路快照（#179）；蒸馏游标持久化 `distill_cursors` 与旧宿主内存游标降级（#229/#274/#279）；工具暴露开关 `disableMemorySearch` / `disableMemoryArchive`（#276）；document 型记忆（#230）、总览独立路由（#258）、错峰队列（#239 第 4 项）、注入命中留痕（#217）、token 记账修复（#242）、运行完整性判据修复（#268）；1275 测试全绿 |
-| **v0.8.6** | （待填） |
 | **v0.8.4** | MCP 六件套 + 图召回轴 + 冷启动 + 注入截断/状态条 + 蒸馏可靠性批次：stdio MCP server 让记忆六件套进任意 MCP 客户端——零依赖（JSON-RPC 2.0 换行帧，不引 SDK），工具面与 `src/tools.js` 逐字对齐、平价回归锁漂移，配置沿用 CLI 约定（#181/#214）；图召回轴 `entityRecallEnabled`——检索融合池三源扩四源，实体挂联记忆参与 blend/rrf/minmax，与 BM25 同为确认/回填信号（#219/#222）；冷启动 `src/bootstrap.js` 从仓库文件反向构建初始记忆——零 LLM 必有产出、幂等，`POST /bootstrap`（#220/#223）；注入截断上限可配 `injectContentMaxChars` + 截断尾部带全文 `memory_get` 指引（#164①/#225）；dream 总览升级常驻状态条 + 叙述条 `dreamNarrativeEnabled`（#164/#227/#228）；记忆复用统计卡 / 注入状态卡 / 路由旧值显式标记（#182/#217/#191/#213）；heat 幂律换广义指数 `heatGlobalBeta`（#218）；修复 reasoningEffort 连通性透传、summarize 增量蒸馏 + 子会话交付补齐（#215/#226/#232）；1160 测试全绿 |
 | **v0.8.3** | 注入轮换与下载可靠性批次：注入位跨轮轮换 `injectRotationTurns`（默认 0 = 关）——同一会话相邻轮次不再反复注入同一条，窗口只看之前轮次、同查询工具轮不推进不转自己（sessionId 分桶 FIFO 32，#205/#206）；候选池四处扩容 `poolSize = maxItems × (轮换窗口 + 1)`（下限 200），旋钮开多大、池子就够多大（#208）；模型文件下载断点续传与重试 `resilientModelDownload`（默认开）——Range / If-Range 续传、416 / 偏移失配重置、单写者锁 + 降级直通 + 空闲看门狗（#194/#207）；1079 测试全绿 |
 | **v0.8.2** | 生态与性能批次（社区贡献集中合入）：LLM 消息补 source 契约——严格 provider 下 dream/summarize/sleep/实体抽取不再序列化抛错（#189/#190）；memory_get 输出 schema 与共享 DTO 同源（#184/#186）；sleep 计时器撞 CD 重排 + 构造挂表（#187/#192）；单 logit 重排器恒 0.5 修复 + 镜像/量化接线（#188/#193）；连通性探测改发 user 消息（#197）；首轮注入 BM25 同步兜底——老偏好不再占满槽位（#198/#199）；autoDream 宽容路径闭环——coverage 不足降级 degraded + archive 类型护栏/批量上限 `dreamMaxArchivePerRun`（#104/#200/#201）；检索路径性能第一批——updated_at 索引 + all() 剪列 + 向量解析缓存（#202/#203，all() 231→51ms、searchVector ~140→16ms）；standalone API 补 profile/rules 路由（#180/#185）；1061 测试全绿 |
@@ -379,7 +379,7 @@ v0.3.0 起新增**记忆基因**层：从记忆里抽取**命名实体**、**带
 
 | **v0.8.4** | ✅ 完成 | MCP 六件套 + 图召回轴 + 冷启动 + 注入截断/状态条 + 蒸馏可靠性 | stdio MCP server 让记忆六件套进任意 MCP 客户端——零依赖（JSON-RPC 2.0 换行帧，不引 SDK）、工具面与 `src/tools.js` 逐字对齐、平价回归锁漂移，配置沿用 CLI 约定（#181/#214）；图召回轴 `entityRecallEnabled`——检索融合池三源扩四源，实体挂联记忆参与 blend/rrf/minmax，与 BM25 同为确认/回填信号（#219/#222）；冷启动 `src/bootstrap.js` 从仓库文件反向构建初始记忆——零 LLM 必有产出、幂等，`POST /bootstrap`（#220/#223）；注入截断上限可配 `injectContentMaxChars` + 截断尾部带全文 `memory_get` 指引（#164①/#225）；dream 总览常驻状态条 + 叙述条 `dreamNarrativeEnabled`（#164/#227/#228）；记忆复用统计卡 / 注入状态卡 / 路由旧值显式标记（#182/#217/#191/#213）；heat 广义指数 `heatGlobalBeta`（#218）；reasoningEffort 连通性透传 + summarize 增量蒸馏与子会话交付（#215/#226/#232）；1160 测试全绿 |
 | **v0.8.5** | ✅ 完成 | 主动整理接口 + 注入形态 + 蒸馏可靠性 | agent 主动整理接口 `service.organize`（`dryRun` 比对报告 → agent 判断 → `apply` 落库；筛除＝归档不删、同一份报告只许落地一次、全程复用 `dream_runs` 回执，#231/#267，heptaspirit）；注入形态第一批——`injectGuidanceEnabled` 能力说明段与 `pinnedInjectBudget` 约束/偏好 pin 池（#249）、注入预览卡（#179）；蒸馏游标持久化 `distill_cursors` 与旧宿主内存游标降级（#229/#274/#279）；工具暴露开关 `disableMemorySearch` / `disableMemoryArchive`（#276）；document 型记忆（#230）；总览独立路由（#258）；错峰队列（#239 第 4 项）；1275 测试全绿 |
-| **v0.8.6** | 🚧 准备中 | （待填） | （待填） |
+| **v0.8.6** | ✅ 完成 | 可靠性修复批次（autoDream 连发治理 + 审计覆盖 + 嵌入质量） | autoDream / sleep 节流与冷却时刻跨重启持久化——`lastRunAt` 从 `dream_runs` 审计表恢复（按 `run_type` 过滤），审计行改记开跑时刻，重启不再绕过最小间隔 / 冷却闸（#89/#291）；Sleep Mode 与实体抽取接入 LLM 审计 `llm_audit_logs`（#250/#286）；本地嵌入按模型族选池化（BGE → CLS，#285）；1290 测试全绿 |
 
 > 新能力一律做成**可开关的功能**（配置启用/关闭），默认保守开启、不破坏现有行为。`failure_memories` 表与 autoDream 决策引擎已为后续反思性成长铺好路。
 
@@ -713,7 +713,7 @@ src/
 ├── api.js            # HTTP 路由（Web 面板数据通道，含 /conflicts 冲突队列）
 └── index.js          # 插件接线
 lib/                  # src 的同步分发产物（npm run sync；发布前由 root prepack 的 check-sync.js 校验一致性；唯一手写例外 lib/client.js——Web 面板 bundle，sync 不覆盖）
-test/                 # 1275 个 node:test 测试（审计与三轴线压测不变量；src↔lib 一致性由 scripts/check-sync.js 发布闸门校验）
+test/                 # 1290 个 node:test 测试（审计与三轴线压测不变量；src↔lib 一致性由 scripts/check-sync.js 发布闸门校验）
 scripts/              # e2e-dsh.js 端到端演示 · stress-dsh.js 三轴线压测 · sync-lib.js 同步 · check-sync.js 发布闸门 · benchmark-recall.js / benchmark-embed.js / benchmark-rerank.js 基准 · sync-test-badge.mjs 测试徽章 · build-runtime-manifest.mjs 运行时清单
 ```
 
@@ -722,7 +722,7 @@ scripts/              # e2e-dsh.js 端到端演示 · stress-dsh.js 三轴线压
 ```bash
 cd dsh-mneme
 npm install        # 安装 peer 依赖（以 devDependencies 形式，用于本地测试）
-npm test           # 运行 1275 个测试
+npm test           # 运行 1290 个测试
 npm run stress     # 三轴线压测：长会话检索 / 冲突仲裁 / 多 Agent 并发（离线 mock LLM）
 npm run sync       # 把 src/ 同步到 lib/（发布时由 prepack 钩子自动执行）
 ```
