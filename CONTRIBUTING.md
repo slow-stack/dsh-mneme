@@ -190,7 +190,7 @@ Every report meeting the minimums gets code-level verification and a reply. Issu
 
 ## Contact
 
-- **General questions & contributions**: [GitHub Discussions](https://github.com/slow-stack/dsh-mneme/discussions) or `work@modusensus.space`
+- **General questions & contributions**: [GitHub Discussions](https://github.com/slow-stack/mneme/discussions) or `work@modusensus.space`
 - **Security vulnerabilities**: report privately via [SECURITY.md](SECURITY.md) — never open a public issue for vulnerabilities
 
 ---
@@ -374,7 +374,7 @@ DSH 上游仍处于 developer preview 阶段，API 与服务接口变动频繁�
 
 ## 联系方式
 
-- **一般问题与贡献咨询**：[GitHub Discussions](https://github.com/slow-stack/dsh-mneme/discussions) 或 `work@modusensus.space`
+- **一般问题与贡献咨询**：[GitHub Discussions](https://github.com/slow-stack/mneme/discussions) 或 `work@modusensus.space`
 - **安全漏洞**：请通过 [SECURITY.md](SECURITY.md) 私有提交，不要在公开 Issue 中提交漏洞
 
 ---

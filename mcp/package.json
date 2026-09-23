@@ -12,13 +12,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slow-stack/dsh-mneme.git",
+    "url": "git+https://github.com/slow-stack/mneme.git",
     "directory": "mcp"
   },
   "bugs": {
-    "url": "https://github.com/slow-stack/dsh-mneme/issues"
+    "url": "https://github.com/slow-stack/mneme/issues"
   },
-  "homepage": "https://github.com/slow-stack/dsh-mneme#readme",
+  "homepage": "https://github.com/slow-stack/mneme#readme",
   "keywords": [
     "mcp",
     "memory",

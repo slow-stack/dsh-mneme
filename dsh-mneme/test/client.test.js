@@ -665,7 +665,7 @@ test("settings feedback card: prefilled issue + mailto + browse, version from /i
   );
   // 2. GitHub 新建 issue：issues/new?title=&body= 预填环境信息（当前仓库无模板）
   assert.ok(
-    clientSource.includes("https://github.com/slow-stack/dsh-mneme/issues/new?title="),
+    clientSource.includes("https://github.com/slow-stack/mneme/issues/new?title="),
     "the issue link must prefill title+body on issues/new"
   );
   assert.ok(
@@ -679,7 +679,7 @@ test("settings feedback card: prefilled issue + mailto + browse, version from /i
   );
   // 4. 浏览已知问题：跳仓库 issues 列表页（去重前置步骤）
   assert.ok(
-    clientSource.includes('href: "https://github.com/slow-stack/dsh-mneme/issues"'),
+    clientSource.includes('href: "https://github.com/slow-stack/mneme/issues"'),
     "the browse link must open the repo issues list"
   );
   // 5. 双语 i18n

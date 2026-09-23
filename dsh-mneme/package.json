@@ -5,11 +5,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slow-stack/dsh-mneme.git"
+    "url": "git+https://github.com/slow-stack/mneme.git"
   },
-  "homepage": "https://github.com/slow-stack/dsh-mneme#readme",
+  "homepage": "https://github.com/slow-stack/mneme#readme",
   "bugs": {
-    "url": "https://github.com/slow-stack/dsh-mneme/issues"
+    "url": "https://github.com/slow-stack/mneme/issues"
   },
   "type": "module",
   "main": "lib/index.js",

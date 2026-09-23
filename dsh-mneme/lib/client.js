@@ -2357,7 +2357,7 @@ window.__ModuleLoader__.load({
       // 版本/平台方便归档，正文同款模板；纯链接零后端成本。
       const feedbackEnv = `**插件版本**: ${pkgVersion}\n**平台**: ${platformLabel()}\n`;
       const feedbackBody = feedbackEnv + "**问题描述**:\n- 期望行为:\n- 实际行为:\n- 复现步骤:\n";
-      const issueHref = "https://github.com/slow-stack/dsh-mneme/issues/new?title="
+      const issueHref = "https://github.com/slow-stack/mneme/issues/new?title="
         + encodeURIComponent("[dsh-mneme] 问题反馈")
         + "&body=" + encodeURIComponent(feedbackBody);
       const mailHref = "mailto:work@modusensus.space?subject="
@@ -2790,7 +2790,7 @@ window.__ModuleLoader__.load({
           h("div", { style: { display: "flex", flexDirection: "column", gap: 2 } },
             h("a", { className: "mneme-feed-link", href: issueHref, target: "_blank", rel: "noopener noreferrer" }, t("memory.settings.feedback.newIssue")),
             h("a", { className: "mneme-feed-link", href: mailHref }, t("memory.settings.feedback.email")),
-            h("a", { className: "mneme-feed-link", href: "https://github.com/slow-stack/dsh-mneme/issues", target: "_blank", rel: "noopener noreferrer" }, t("memory.settings.feedback.browse"))
+            h("a", { className: "mneme-feed-link", href: "https://github.com/slow-stack/mneme/issues", target: "_blank", rel: "noopener noreferrer" }, t("memory.settings.feedback.browse"))
           ),
           h("div", { className: "mneme-featsubhint", style: { marginTop: 8 } }, t("memory.settings.feedback.hint"))
         )

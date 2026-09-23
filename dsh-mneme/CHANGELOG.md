@@ -5,7 +5,7 @@
 ## 🧹 清理
 
 - **README 版本历史瘦身**：包 README 移除「最近版本亮点」逐版本大表与逐小版本路线图表（~140 行），
-  压缩为指向 [CHANGELOG](CHANGELOG.md) 与 [GitHub Releases](https://github.com/slow-stack/dsh-mneme/releases)
+  压缩为指向 [CHANGELOG](CHANGELOG.md) 与 [GitHub Releases](https://github.com/slow-stack/mneme/releases)
   的短节 + 一行进化链——版本说明以 Release 为唯一事实来源，日后发版不再需要同步改 README；
   根 README 路线图的失效锚点改指 CHANGELOG。**新增「用在其他 AI 工具里（MCP）」速查节**
   （根 README 双语）：Claude Code / Cursor / Codex / Hermes / OpenCode / OpenClaw 六客户端的最小

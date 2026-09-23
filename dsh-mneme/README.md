@@ -5,11 +5,11 @@
 [![npm version](https://img.shields.io/npm/v/@modusensus/dsh-mneme?color=blue&label=npm)](https://www.npmjs.com/package/@modusensus/dsh-mneme)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Awesome](https://awesome-dsh-plugin.com/badge.svg)](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin)
-[![tests](https://img.shields.io/badge/tests-1317%20passed-success)](https://github.com/slow-stack/dsh-mneme)
-[![CI](https://img.shields.io/github/actions/workflow/status/slow-stack/dsh-mneme/ci.yml)](https://github.com/slow-stack/dsh-mneme/actions)
+[![tests](https://img.shields.io/badge/tests-1317%20passed-success)](https://github.com/slow-stack/mneme)
+[![CI](https://img.shields.io/github/actions/workflow/status/slow-stack/mneme/ci.yml)](https://github.com/slow-stack/mneme/actions)
 [![node](https://img.shields.io/badge/node-22%2B-blue)](https://nodejs.org)
 [![npm downloads](https://img.shields.io/npm/d18m/@modusensus/dsh-mneme.svg?color=blue&label=downloads)](https://www.npmjs.com/package/@modusensus/dsh-mneme)
-[![coverage](https://img.shields.io/codecov/c/github/slow-stack/dsh-mneme/main)](https://codecov.io/gh/slow-stack/dsh-mneme)
+[![coverage](https://img.shields.io/codecov/c/github/slow-stack/mneme/main)](https://codecov.io/gh/slow-stack/mneme)
 
 > 给 DeepSeek Harness 的跨会话记忆插件：让 Agent 记住你、记住项目、自动整理记忆。**Mneme**（Μνήμη）——希腊记忆女神 Mnemosyne 之名，掌管记忆与梦境，正如 autoDream 在后台巩固记忆。
 
@@ -245,7 +245,7 @@ v0.3.0 起新增**记忆基因**层：从记忆里抽取**命名实体**、**带
 
 ## 📜 版本历史与路线图
 
-> 完整版本说明见 [CHANGELOG](CHANGELOG.md) 与各版本 [GitHub Release](https://github.com/slow-stack/dsh-mneme/releases)；当前特性以本 README 正文与[配置表](#-配置)为准。早期版本中的实验性功能（Wiki-Link、tag 系统等）已在 v0.7.11 移除，详见 CHANGELOG 对应条目。
+> 完整版本说明见 [CHANGELOG](CHANGELOG.md) 与各版本 [GitHub Release](https://github.com/slow-stack/mneme/releases)；当前特性以本 README 正文与[配置表](#-配置)为准。早期版本中的实验性功能（Wiki-Link、tag 系统等）已在 v0.7.11 移除，详见 CHANGELOG 对应条目。
 
 🧬 Gene → 🛡️ 审计加固 → 💤 Sleep Mode → 🕸️ 召回融合与图谱 → ✨ 面板体验 → 🌡️ 自进化记忆 → 🔐 作用域隔离 → 🌐 MCP 生态
 
@@ -275,7 +275,7 @@ dsh web
 #### 方式二：从源码安装
 
 ```bash
-git clone https://github.com/slow-stack/dsh-mneme.git
+git clone https://github.com/slow-stack/mneme.git
 cd dsh-mneme
 dsh plugin --profile web add .
 dsh web

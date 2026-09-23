@@ -66,7 +66,7 @@ Since v0.7.12 the plugin can optionally start its own HTTP server (`externalApiE
 
 ### Please DO
 
-1. **Email** `work@modusensus.space` (or open a **private security advisory** via [GitHub Security Advisories](https://github.com/slow-stack/dsh-mneme/security/advisories))
+1. **Email** `work@modusensus.space` (or open a **private security advisory** via [GitHub Security Advisories](https://github.com/slow-stack/mneme/security/advisories))
 2. Include:
    - A clear description of the vulnerability
    - Steps to reproduce (minimal test case preferred)
@@ -106,7 +106,7 @@ Not sure whether your finding is in scope? Report it anyway via the private chan
 ### Escalation (If You Do Not Hear Back)
 
 - If you do not receive an acknowledgment within **48 hours**, re-send to `work@modusensus.space` with subject prefix: `[SECURITY][FOLLOW-UP]`.
-- If there is still no response after another **48 hours**, open a **private security advisory** via [GitHub Security Advisories](https://github.com/slow-stack/dsh-mneme/security/advisories) and reference your original report timestamp.
+- If there is still no response after another **48 hours**, open a **private security advisory** via [GitHub Security Advisories](https://github.com/slow-stack/mneme/security/advisories) and reference your original report timestamp.
 - Do not disclose details publicly while escalation is in progress.
 
 ### Severity Classification
@@ -248,7 +248,7 @@ We follow a 5-step process for handling third-party dependency vulnerabilities:
 
 Security advisories are published through the following channels simultaneously:
 
-1. **[GitHub Security Advisories](https://github.com/slow-stack/dsh-mneme/security/advisories)** — primary channel with detailed technical information
+1. **[GitHub Security Advisories](https://github.com/slow-stack/mneme/security/advisories)** — primary channel with detailed technical information
 2. **[npm Releases](https://www.npmjs.com/package/@modusensus/dsh-mneme)** — release notes include security advisories and fix summaries
 
 To receive security notifications:
@@ -355,14 +355,14 @@ All contributors must comply with the following security requirements:
 ## Contact
 
 - **Security Team**: `work@modusensus.space`
-- **Private Advisory**: [GitHub Security Advisories](https://github.com/slow-stack/dsh-mneme/security/advisories)
+- **Private Advisory**: [GitHub Security Advisories](https://github.com/slow-stack/mneme/security/advisories)
 - **GPG Key**: Available upon request for encrypted communication
 
 ---
 
 ## License
 
-This project is licensed under the **MIT License**. See [LICENSE](https://github.com/slow-stack/dsh-mneme/blob/main/LICENSE) for details.
+This project is licensed under the **MIT License**. See [LICENSE](https://github.com/slow-stack/mneme/blob/main/LICENSE) for details.
 
 ---
 
@@ -424,7 +424,7 @@ This project is licensed under the **MIT License**. See [LICENSE](https://github
 
 ### 请这样做
 
-1. **发送邮件**至 `work@modusensus.space`（或通过 [GitHub 私有安全公告](https://github.com/slow-stack/dsh-mneme/security/advisories) 提交）
+1. **发送邮件**至 `work@modusensus.space`（或通过 [GitHub 私有安全公告](https://github.com/slow-stack/mneme/security/advisories) 提交）
 2. 邮件内容请包含：
    - 漏洞的清晰描述
    - 复现步骤（优先提供最小测试用例）
@@ -464,7 +464,7 @@ This project is licensed under the **MIT License**. See [LICENSE](https://github
 ### 无响应升级路径
 
 - 若 **48 小时内**未收到确认，请重新发送到 `work@modusensus.space`，邮件标题加前缀：`[SECURITY][FOLLOW-UP]`。
-- 若再次等待 **48 小时**仍无回复，请通过 [GitHub 私有安全公告](https://github.com/slow-stack/dsh-mneme/security/advisories) 提交，并注明首次报告时间。
+- 若再次等待 **48 小时**仍无回复，请通过 [GitHub 私有安全公告](https://github.com/slow-stack/mneme/security/advisories) 提交，并注明首次报告时间。
 - 升级处理中请勿公开披露漏洞细节。
 
 ### 严重程度分级
@@ -606,7 +606,7 @@ This project is licensed under the **MIT License**. See [LICENSE](https://github
 
 安全公告通过以下渠道同时发布：
 
-1. **[GitHub Security Advisories](https://github.com/slow-stack/dsh-mneme/security/advisories)** — 主要渠道，包含详细技术信息
+1. **[GitHub Security Advisories](https://github.com/slow-stack/mneme/security/advisories)** — 主要渠道，包含详细技术信息
 2. **[npm Releases](https://www.npmjs.com/package/@modusensus/dsh-mneme)** — 发布说明中包含安全公告和修复摘要
 
 接收安全通知方式：
@@ -713,14 +713,14 @@ dsh-mneme:
 ## 联系方式
 
 - **安全团队**：`work@modusensus.space`
-- **私有公告**：[GitHub Security Advisories](https://github.com/slow-stack/dsh-mneme/security/advisories)
+- **私有公告**：[GitHub Security Advisories](https://github.com/slow-stack/mneme/security/advisories)
 - **GPG 密钥**：如需加密通信，可应请求提供
 
 ---
 
 ## 许可协议
 
-本项目基于 **MIT License** 开源。详见 [LICENSE](https://github.com/slow-stack/dsh-mneme/blob/main/LICENSE)。
+本项目基于 **MIT License** 开源。详见 [LICENSE](https://github.com/slow-stack/mneme/blob/main/LICENSE)。
 
 ---
 
