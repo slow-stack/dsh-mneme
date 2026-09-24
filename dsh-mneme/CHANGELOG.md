@@ -4,132 +4,78 @@
 
 ## 🐛 修复
 
-- （待填）
-
-## [Unreleased]
-
-## 🧹 清理
-
-- **README 版本历史瘦身**：包 README 移除「最近版本亮点」逐版本大表与逐小版本路线图表（~140 行），
-  压缩为指向 [CHANGELOG](CHANGELOG.md) 与 [GitHub Releases](https://github.com/slow-stack/mneme/releases)
-  的短节 + 一行进化链——版本说明以 Release 为唯一事实来源，日后发版不再需要同步改 README；
-  根 README 路线图的失效锚点改指 CHANGELOG。**新增「用在其他 AI 工具里（MCP）」速查节**
-  （根 README 双语）：Claude Code / Cursor / Codex / Hermes / OpenCode / OpenClaw 六客户端的最小
-  挂载配置表，包 README MCP 节头互链对齐。
-- **移除过时文档**：`docs/devlog/`（6 篇 v0.1.x 开发日志，叙事已被 CHANGELOG 覆盖且全仓库零引用）、
-  `dsh-mneme/docs/MIGRATION.md`（v0.3→v0.4 升级说明，迁移幂等自动执行，现无适用场景）、根目录 `IDEA.md`
-  （未跟踪的早期头脑草稿）。双 README 与 CONTRIBUTING 目录树中指向 MIGRATION.md 的 6 处链接同步移除；
-  ENTITIES / SEMANTIC / LOCAL_MODEL / SLEEP 四篇专题文档不动。
+- **DSH 0.1.7 系宿主上面板入口整块消失（issue #287 / #309，PR #310）**：宿主 `dsh-client-ui-primitives`
+  在 0.1.7-alpha.1 起把图标命名从「像素后缀」（`IconArchiveOutline20`）换成「字重后缀」
+  （`OutlineRegular` / `OutlineMedium`）且不留旧名别名，`lib/client.js` 取到 `undefined`
+  交给 `h()` 渲染，落成 React #130，宿主 slot 把崩溃的 entry 整条摘除——侧栏「记忆」入口
+  与记忆库面板一起消失（0.8.5/0.8.6 均受影响，跨 Windows/macOS 实测一致）。修复：运行时
+  按旧名 → `Regular` → `Medium` 顺序探测，全缺时降级为无图标而非崩溃；0.1.6 系旧宿主
+  链首命中不丢图标。回归守卫锁链序、裸常量不得直达 `h()`、4 个渲染点全过助手。
+  感谢 chengxinshengglj-png（#257/#258/#287 三份高质量报告 + 本修复）、idoall（0.1.7-rc.1
+  macOS 复现与 0.8.6 未带修复的拆包证据）、idonweb（五版本 primitives 拆包对拍钉住断点）、
+  lqs50（Windows 复现与控制台日志）。
 
 ## 🆕 新增
 
-- **存储无损回收维护入口（issue #275 第一批）**：新增 `src/maintenance.js` 与 `dsh-mneme reclaim`
-  子命令（standalone 数据面 `POST /maintenance/reclaim`）。两项零价值判断、零条数变化的回收：
-  `dream_runs.input` 按保留窗口（默认 7 天）置空，run 的骨架、LLM 决策原文与 receipt 一律留住、
-  永不删行（拍板 3：裁列同意、删行不同意）；归档行向量置空，检索 SQL 恒带 `archived = 0`、按定义
-  不可达。刻意不挂启动路径、不接定时器、不开 `auto_vacuum`：这是不可逆的内容丢弃，只由人显式触发
-  （默认 dry-run，带 `--apply` 才执行，`--vacuum` 单独指定）。报告口径按 VACUUM 前后体积量，列文本
-  大小只作上界；执行留一行 receipt（`llm_audit_logs`，`operation_type='storage_reclaim'`）。取消归档
-  时服务端重新排队嵌入，回收不是单程票。实测（活库副本上跑：177 个 run 的输入快照 + 295 行
-  归档向量，磁盘足迹 69.5 MiB 到 50.8 MiB，VACUUM 含 checkpoint 1.2 s）与代价见
-  [`docs/STORAGE.md`](docs/STORAGE.md)。
-- **写入准入第一阶段：只计量、不拦截（issue #254）**：新增 `src/write-admission.js`。会话写入
-  预算（g1）与同话题冷却（g2）两个闸门这一阶段只产遥测——不装阈值、不加拦截分支，写入行为
-  逐字节不变（维护者 2026-09-23 拍板口径「先记录不拦，由遥测定」，N 与 X 等真实分布再定）。
-  测量点落进既有 `llm_audit_logs`（`trigger_source='writeAdmission'`、`operation_type='write_admission'`、
-  `status='skipped'`、`metadata.gate='g1'`），并新增可空列 `session_key` 与索引：一行一个新建行，
-  「会话内新建条数」按会话直接计数即得；同话题新建行重复时在该行附 `metadata.g2`（`topic` 与
-  `gap_ms`），即得「同话题重写间隔」分布。口径收口在三处：只在新行上取测量点（并入已有行不算，
-  纯合并是去重机制在正常工作，也因此不刷新同话题基准）；pinned 类型（constraint / preference）
-  不进预算也不进基准，但仍照记一行（`metadata.exempt='pinned'`，穿透频率可观测）；无会话身份的
-  写入（dream / summarize / import / organize）不进预算。`llmAudit.enabled=false` 时一行都不写：
-  那个开关同时关掉了审计行的启动期清理，否则就是在无保留期的表里按写入频次增长。计量全程旁路，
-  任一步失败只 warn、绝不反噬写入；审计列表端点不外泄 `session_key`（内部计数键）。第二阶段的
-  拦截与 `memory_save({confirm:true})` 不在本批。
-- **MCP server 拆出独立包 `mneme-memory`（讨论 #300 双包方案第一批）**：根目录新增
-  `mcp/` 包目录（bin 名 `mneme-mcp`），零依赖单文件从 `dsh-mneme/bin/` 迁出——工具面、
-  渲染与 standalone API 数据面完全不变，插件包内旧 bin `dsh-mneme-mcp` 原样保留
-  （向后兼容，已部署挂载零迁移）。新增 env 别名 `MNEME_URL` / `MNEME_TOKEN`（与
-  `DSH_MNEME_*` 同级、后者优先，config 文件不收新键）；跨包平价回归测试锁新包
-  工具定义与 `src/tools.js` 逐字一致，漂移即红。mcp 包独立版本号从 0.1.0 起步。
-- **recall_runs 审计回执附带 per-source 检索信号（检索融合权重画像的前置侦察）**：
-  `searchMemories` 的 recall 回执里每个 candidate 附 `signals`——keyword/vector/bm25/entity
-  四路的融合前原始分。`fuseRecall` 本就无条件计算这组分数（此前只服务 `signalTransparency`
-  的展示装饰），现在随回执一起落进 `recall_runs.candidates`。纯加字段：无 schema 迁移、
-  无新配置开关、不改任何排序行为，旧行照常读；`mode='inject'` 的注入回执没有检索信号，
-  不加。动机：自适应融合加权的收益已被消融实验锚定（AssoMem, arXiv 2510.10397，去掉
-  自适应权重分配 Acc@10 -10.3），而查表版权重的离线聚合需要「per-source 分数 × 复用
-  数据」成对出现——先记录后立项，攒够 recall 数据再评估第二阶段。
-- **镜像与导出补齐落盘盲区、文件头 frontmatter、去掉 500 条静默截断（issue #278 第一批）**：
-  镜像与 markdown 导出的落点原先只有 5 个 type——`pitfall` / `constraint` / `rejected_solution` /
-  `pattern` 从不落盘，对近一半活跃记忆是盲的，且没有任何提示；同时 `syncMirror` 用
-  `store.list({ limit: 500 })` 取活跃行，活跃集超过 500 条时文件静默少掉尾部记忆，文件本身
-  也没有任何提示。① `TYPE_FILE` 补 `pitfalls.md` / `constraints.md` / `rejected-solutions.md` /
-  `patterns.md`（旧 5 个文件名不动），两处过滤（`syncMirror` 的 coveredTypes、`/export` 的
-  byType）随这张表扩自动收敛，不需要各自改一遍；`MIRROR_EXCLUDED_TYPES` 显式排除 `document`
-  指针行（镜像块渲染的字段里没有 `doc_path`，落盘会得到「看着完整、其实找不到文件」的视图），
-  `TYPES \ TYPE_FILE` 必须恰好等于该集合、测试双向钉住（漏的与重叠的都红），将来新增 type 必须
-  显式决定落不落镜像。② 文件头写 frontmatter（`type` / `generated.by` / `generated.at` /
-  `covered` / `coverage: active-only` / `tags` 并集），键名对齐 OKF v0.2 §4.1 与 §5.2，
-  `generated.by` 按 §7 的 actor 约定带版本号；条目级补 `作用域`（agent / workspace）与
-  `敏感度`，有值才渲染，值压成单行（值里的换行会伪造出条目头，属信任边界）；解析侧白名单正则
-  改由 `lang.js` 的 `mirrorLabel` 现算，渲染与解析单点定义。③ `syncMirror` 改 `store.all()` +
-  同一套 forgotten / archived 过滤（`store.list` 的 `limit` 默认值只有 50，不能只去掉 limit）；
-  代价是全表读落在每次业务写后的最热路径上（`all()` 5k 行 231ms → ~135ms，见 #202），不因此
-  退回任何截断——「宣称覆盖活跃集」与静默截断不能共存。④ 渲染先比对再写盘（比对时忽略
-  `generated.at`）：正文没变就不碰文件，否则每次业务写都让全部镜像文件的字节变化，编辑器与
-  文件监听器会看到「被外部修改」并提示重载（进行中的手工编辑有被冲掉的风险），同步盘与 git
-  每次写都产生无意义 diff；这同时正是 OKF 对 `generated.at` 的语义（只记内容上次真正变化）。
-  ⑤ `/export?format=markdown` 由「按类型分节、每节各带文件头」改成「一份文档级 frontmatter
-  （`type: memory-export` / `coverage: all`）+ 各类型分节」——9 段 frontmatter 串进同一个
-  `.md` 时只有第一段有效，其余 `---` 退化成分隔线、`tags:` 变成正文段落，正好顶掉「tag 落文件头
-  以便直接聚合」这个目的；条目块与镜像同构，导出文本仍能被 `/import` 原样吃回。`README.md` 与
-  `docs/MIGRATION.md` 里「五个 .md 镜像文件」的描述同步改为九个。测试 1294 → **1302**。
+- **存储无损回收维护入口（issue #275 第一批，PR #307）**：新增 `src/maintenance.js` 与
+  `dsh-mneme reclaim` 子命令（standalone 数据面 `POST /maintenance/reclaim`）。两项零价值
+  判断、零条数变化的回收：`dream_runs.input` 按保留窗口（默认 7 天）置空（run 的骨架、
+  LLM 决策原文与 receipt 一律留住、永不删行）；归档行向量置空（检索 SQL 恒带 `archived = 0`、
+  按定义不可达）。刻意不挂启动路径、不接定时器、不开 `auto_vacuum`：这是不可逆的内容丢弃，
+  只由人显式触发（默认 dry-run，带 `--apply` 才执行，`--vacuum` 单独指定）。报告口径按
+  VACUUM 前后体积量，列文本大小只作上界；执行留一行 receipt。取消归档时服务端重新排队嵌入，
+  回收不是单程票。实测（活库副本：177 个 run 的输入快照 + 295 行归档向量，磁盘足迹
+  69.5 MiB → 50.8 MiB，VACUUM 含 checkpoint 1.2 s）与代价见 `docs/STORAGE.md`。
+- **升格吸收的 evidence 随之归档 + 归档侧第五指标（issue #275 拍板 5，PR #312）**：
+  `memory_document` 注册成功后同一事务把被吸收的原子 evidence 行翻归档（只翻标志位、
+  内容与审计全留、可还原；`keep_evidence_active: true` 可退出；pinned 池 constraint /
+  preference 永不自动归档；document / summary 两类自有生命周期不吸收）。重注册新版文档时
+  认回自己此前吸收过的 evidence 行（窄口径：别的文档引用照旧拒绝、捏造判据不变）。
+  `recall-stats` 新增 `archive` 块（归档总行数 / 窗口内净增 / 日均速率 / 按内容哈希可压掉
+  行数），面板「记忆复用」卡同步展示；判据用内容哈希而不用向量近重复——回收动作本身会清
+  归档行向量，指标不能建在会被自己回收掉的数据上。
+- **写入准入第一阶段：只计量、不拦截（issue #254，PR #305 + #311）**：新增
+  `src/write-admission.js`。三个确定性测量点随每次会话内新建行落进 `llm_audit_logs`
+  （一行一个新建行，全程旁路、任一步失败只 warn、绝不反噬写入）：
+  ① g1 会话写入预算——`session_key` 可空列 + 索引，按会话直接计数即得「会话内新建条数」分布；
+  ② g2 同话题冷却——话题锚只收机械可判的两类（issue/PR 引用、文件路径），重复时附
+  `metadata.g2`（topic + gap_ms）即得「同话题重写间隔」分布；
+  ③ dup 内容哈希——`memories.content_hash` 派生列（归一化 NFKC/小写/去标点/空白折叠后取
+  sha256，存量回填 + 索引 + 五个写入口全重算），归档行与已遗忘行一并纳入去重候选集，
+  命中区分活区 / 归档 / 遗忘三个出口分字段落盘——「出口止体积、不止重复」的另一半由
+  去重候选集兜住。
+  口径收口：只在新行上取测量点（并入已有行不算）；pinned 类型不进预算也不进基准，仍照记
+  一行（穿透频率可观测）；无会话身份的写入（dream / summarize / import / organize）不进
+  预算；`llmAudit.enabled=false` 时一行都不写。不装阈值、不加拦截分支，N 与 X 等真实分布
+  再定（2026-09-23/24 拍板）。
+- **MCP server 拆出独立包 `mneme-memory`（讨论 #300 双包方案第一批，PR #302）**：根目录
+  新增 `mcp/` 包目录（bin 名 `mneme-mcp`），零依赖单文件从 `dsh-mneme/bin/` 迁出——工具面、
+  渲染与 standalone API 数据面完全不变，插件包内旧 bin `dsh-mneme-mcp` 原样保留（向后
+  兼容，已部署挂载零迁移）。新增 env 别名 `MNEME_URL` / `MNEME_TOKEN`（与 `DSH_MNEME_*`
+  同级、后者优先）；跨包平价回归测试锁新包工具定义与 `src/tools.js` 逐字一致。
+  `mneme-memory@0.1.1` 已上 npm 并带 `mcpName` 字段（官方 MCP Registry 发布准备，PR #304）。
+- **MCP 生态收录配套（PR #306 / #308）**：`mcp/server.json` description 压到官方 Registry
+  校验的 100 字符上限内；新增 Dockerfile 与 `glama.json`（Glama 目录的 running-server
+  检查用，`slow-stack/mneme` 已通过 Glama 提交与徽章检查）。
+- **recall_runs 审计回执附带 per-source 检索信号（PR #299）**：`searchMemories` 的 recall
+  回执里每个 candidate 附 `signals`——keyword/vector/bm25/entity 四路的融合前原始分。
+  纯加字段：无 schema 迁移、无新配置开关、不改任何排序行为。动机：自适应融合加权的收益
+  已被消融实验锚定（AssoMem, arXiv 2510.10397），权重画像要靠这组逐路分数才能在真实
+  工作负载上算。
 
-- **注入开关收成两级：`autoInject` 兼任父开关，能力说明归入基础档并默认开（issue #249 第二批）**：
-  注入的「内容」与「时机」已经分成好几类，一个平级布尔表达不了「只要基础注入、不要
-  任何额外时机」。本批实现两级结构：父 = `autoInject`（既有挂载总闸，语义就是「注不
-  注入」，不再另立一个平行的父键，少一个键也少一次迁移决策），子项按 #249 §10 的判据
-  分档——看它是否引入**新的注入时机／新的注入表面／额外成本**：只修正既有位、不引入
-  新时机与新成本的随父生效（键的默认值给开，默认配置不该保留一个已实测的缺陷）；
-  需要新时机或新表面的（N2 回合结束提醒、N3 压缩边缘）独立成键、默认关，实现时挂到
-  同一张表下（今天还没有这两个键）。① 关系与闸门收在 `src/config.js` 的
-  `INJECT_CHILD_FLAGS` + `injectChildEnabled(cfg, key)` 一处，两个消费点（`tools.js`
-  的工具描述、`inject.js` 的 order 150 段落）共用同一个判据，不再各自重写「父关则子
-  不生效」。闸门放消费点而不是把子项压进合并后的 `cfg`：压 cfg 会让 `/features` 的
-  `effective` 丢掉「子项自己勾着、但父关时当前不生效」这个状态，面板就显示不出来。
-  ② `injectGuidanceEnabled` 默认值由关翻到**开**（基础档随父生效）——「agent 不知道
-  何时该查、何时该写」是本议题立项时已实测的缺口，把它默认关着是反的；这是显式的
-  产品决定，发版说明带一句，用户显式写进 `feature_flags` 的值永远优先于默认值。
-  ③ 父闸唯一会漏的落点是工具描述（它住在注入器之外，父关时不会随注入器一起消失）：
-  父关时描述逐字节回到未开状态，回归测试拿真实工具描述钉住这一条。④ `injectGuidanceEnabled`
-  进 `LIGHT_MODE_OFF`：它是工具描述与提示段上的额外常驻文本，轻量档（小模型／小上下文）
-  不该因这次翻转多付这份提示成本。默认档下翻转前后一致；轻量档 + bundle 里显式 `true`
-  这一种组合，由「生效」变成被预设压掉（翻转前它不在预设里，显式 true 在轻量档是生效的），
-  这是刻意的收紧。⑤ 父关 = 子项**不生效**，
-  不是重置用户配置：子项的持久值原样留在 kv 里，重开父开关即恢复上次选择（有回归锁）。
-  ⑥ 面板（`lib/client.js` 的 `FEATURE_CHILDREN`）把子项紧跟父行、缩进显示，父关时补一句
-  「父开关关闭时不生效」，开关本身仍可点——值要能提前设好；后端同一份关系由
-  `test/inject-parent-gate.test.js` 做漂移检查（渲染点、双语计数、白名单三条断言；做过变异验证）。测试 1302 → **1307**。
+## 🧹 清理
 
-- **document 的落盘目录与归属：`documentDir`、`index.md` 机器所有、镜像只读视图（issue #296 第二批）**：
-  document 型记忆的正文归 agent，但落点由 agent 每次自己选，路径散落；镜像第一版还把它整个排除在
-  落盘之外（渲染字段里没有 `doc_path`，落了会得到「看着完整、其实找不到文件」的视图）。① `documentDir`：
-  默认 `<memoryDir>/documents/`（空串 = 跟随），`~` 与相对路径按 memoryDir 同一套解析（相对路径落在
-  memoryDir 下），目录按需创建、创建失败只 warn 不阻断——它是机器产物，不该因为一个不可写的路径让整个
-  插件加载失败；与 memoryDir 一样是路径配置，因此不进 feature flags 白名单、也不上 `/features` 面板。
-  ② managed / external 的边界：`documentDir` 内是 mneme 管的树（`index.md` 与镜像 md 同权），目录外只
-  登记指针行，正文一个字节都不碰；判定按归一化路径且 Windows 大小写不敏感，`documents-old` 这种前缀
-  相像的兄弟目录不算 managed。③ `<documentDir>/index.md`：整文件机器所有，一行一个 document
-  （id + 标题 + managed/external + 路径），可从库重建——文件里不写生成时间，删掉再同步得到逐字节相同的
-  文件；写失败只 warn，不让触发它的业务写失败。④ 镜像侧 `documents.md`：`MIRROR_EXCLUDED_TYPES` 清空、
-  document 收进 `TYPE_FILE`，但作为**只读视图**——一行 = id + 标题 + 摘要首句（上限 120 字符）+ `doc_path`，
-  不含正文，文件头换成「只读视图」那句；`MIRROR_READONLY_TYPES` 让它不参与 `readHumanEdits` 的人改合并，
-  导出/导入也不带它（那两个是 round-trip 通道，视图没有可回填的正文）。⑤ 两个落点共用既有
-  `documentMemoryEnabled` 闸（默认关）：闸关时 document 行不进渲染集，陈旧的 `documents.md` 由既有的
-  「空 type 删文件」路径清掉，`index.md` 由 `syncDocumentIndex` 一起清掉（留一份陈旧索引就是「看着还在、
-  其实已关」的视图，而且会列出已归档的行），闸重开后下一次业务写从库重建。`docs/MIGRATION.md` 与
-  `README.md` 的镜像文件清单同步改为十个并标出只读视图。测试 1307 → **1316**。
+- **README 版本历史瘦身**（PR #301）：包 README 移除「最近版本亮点」逐版本大表与逐小版本
+  路线图表（~140 行），压缩为指向 CHANGELOG 与 GitHub Releases 的短节 + 一行进化链——
+  版本说明以 Release 为唯一事实来源，日后发版不再需要同步改 README。新增「用在其他 AI
+  工具里（MCP）」速查节（根 README 双语）：六客户端最小挂载配置表。移除过时文档：
+  `docs/devlog/`（6 篇 v0.1.x 开发日志）、`docs/MIGRATION.md`（迁移幂等自动执行）、根目录
+  `IDEA.md`（未跟踪草稿）。
+- **仓库更名 slow-stack/dsh-mneme → slow-stack/mneme**（讨论 #300 拍板，PR #303）：旧链
+  GitHub 自动 301，协作者零操作；源码内活引用（徽章图片源、package.json 元数据、运行时
+  issue 链接等 30 处）同步清扫。npm scope `@modusensus/` 不随仓库改名而变。
+
+## [Unreleased]
 
 ## [0.8.6] - 2026-09-23
 
