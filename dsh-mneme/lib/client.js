@@ -2227,13 +2227,6 @@ window.__ModuleLoader__.load({
         eff.embedProvider === "ollama" && strRow("ollamaModel")
       );
 
-      // Issue #239 第 4 项：蒸馏侧错峰时段串（空 = 关闭）。挂在 autoSummarize
-      // 下面——与巩固侧对称，两处错峰开关都能在面板上调。
-      const summarizeSub = eff.autoSummarize && h("div", { className: "mneme-featsub" },
-        strRow("summarizePeakHours"),
-        h("div", { className: "mneme-featsubhint" }, t("memory.features.summarizePeakHours.hint"))
-      );
-
       // 巩固模型：autoDream 开着才展开，避免闲置配置占版面。/llm-providers
       // 可用时用级联下拉 + 连通性测试；旧后端（端点 404）回退纯文本输入。
       const dreamSub = eff.autoDream && h("div", { className: "mneme-featsub" },
@@ -2288,7 +2281,11 @@ window.__ModuleLoader__.load({
           },
             SUMMARIZE_REASONING.map((r) => h("option", { key: r, value: r }, t(`memory.features.summarizeReasoningEffort.${r}`))))
         ),
-        h("div", { className: "mneme-featsubhint" }, t("memory.features.summarizeReasoningEffort.hint"))
+        h("div", { className: "mneme-featsubhint" }, t("memory.features.summarizeReasoningEffort.hint")),
+        // Issue #239 第 4 项：蒸馏侧错峰时段串（空 = 关闭）。与思考强度同处一个
+        // autoSummarize 子块——两处错峰开关都能在面板上调（巩固侧见 dreamSub）。
+        strRow("summarizePeakHours"),
+        h("div", { className: "mneme-featsubhint" }, t("memory.features.summarizePeakHours.hint"))
       );
 
       if (error && !state) return h("section", { className: "mneme-set-card" },

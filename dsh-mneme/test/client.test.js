@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { spawnSync } from "node:child_process";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const clientSource = readFileSync(join(root, "lib/client.js"), "utf8");
@@ -943,4 +944,15 @@ test("a11y+preview: inject preview card is wired on the status tab", () => {
     const occurrences = clientSource.split(`"${key}"`).length - 1;
     assert.ok(occurrences >= 2, `i18n key ${key} must exist in both zh and en (got ${occurrences})`);
   }
+});
+// 面板 bundle 在本文件里只被当**文本**读（上面的断言全是正则/字符串包含），
+// 而仓库的 CI 里没有任何一步**解析**它：于是重复声明这类语法错误能一路绿灯进
+// 主干，后果却是整个面板加载失败（__ModuleLoader__ 拿到的模块一执行就抛
+// SyntaxError）。lib/client.js 无 src 对应物、不参与 sync，也就没有别的闸门
+// 覆盖它——这里补一道解析闸（PR #320 rebase 时真实踩到：与上游新增的
+// summarizeSub 撞名，node --check 报 "Identifier 'summarizeSub' has already
+// been declared"，而当时 CI 全绿）。
+test("client bundle parses: 面板产物必须是合法 JS（无重复声明等语法错误）", () => {
+  const result = spawnSync(process.execPath, ["--check", join(root, "lib/client.js")], { encoding: "utf8" });
+  assert.equal(result.status, 0, `lib/client.js 解析失败：\n${result.stderr || result.stdout}`);
 });
