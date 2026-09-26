@@ -666,11 +666,13 @@ test("GET /api/dsh-mneme/features returns empty overrides and effective config d
   // pinnedInjectBudget、issue #249 N3 新增 continuityRescueEnabled，
   // v0.8.5 新增 disableMemorySearch/disableMemoryArchive，
   // 本地嵌入池化新增 localEmbedPooling，issue #315 新增 summarizeReasoningEffort，
-  // issue #239 第 4 项镜像到巩固新增 dreamPeakHours/dreamPeakMaxDeferMinutes）
-  assert.equal(Object.keys(data.effective).length, 59 + 3 + 2 + 1 + 2 + 2 + 2 + 1 + 1 + 1 + 2);
+  // issue #239 第 4 项镜像到巩固新增 dreamPeakHours/dreamPeakMaxDeferMinutes，
+  // issue #292 新增 autoDreamFailureBackoff）
+  assert.equal(Object.keys(data.effective).length, 59 + 3 + 2 + 1 + 2 + 2 + 2 + 1 + 1 + 1 + 2 + 1);
   assert.equal(data.effective.dreamSkipInvalid, true);
   assert.equal(data.effective.allowCrossTypeMerge, false);
   assert.equal(data.effective.dreamMinIntervalMinutes, 0);
+  assert.equal(data.effective.autoDreamFailureBackoff, false);
   assert.equal(data.effective.dreamMaxTokens, 131072);
   assert.equal(data.effective.sleepProvider, "");
   assert.equal(data.effective.sleepModel, "");

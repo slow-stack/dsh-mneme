@@ -491,6 +491,8 @@ export const apply = (ctx, config) => {
       thresholdChars: cfg.dreamThresholdChars,
       delayMs: cfg.dreamDelayMs,
       minIntervalMs: (cfg.dreamMinIntervalMinutes ?? 0) * 60000,
+      // Issue #292：连续失败指数退避（opt-in，默认关 = 行为不变）。
+      failureBackoff: cfg.autoDreamFailureBackoff === true,
       logger: ctx.logger,
       semantic: { embedder, vectorIndex },
       lastRunAtSeed: store.lastDreamRunAt("auto"),
