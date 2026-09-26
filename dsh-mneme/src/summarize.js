@@ -621,6 +621,10 @@ export function createSummarizer(ctx, service, config, deps = {}) {
           ? { ...options, reasoningEffort: summarizeEffort }
           : options;
         for (let attempt = 0; ; attempt++) {
+          // 每次尝试重置审计状态：effort 拒收/429 的失败 attempt 会把 status 置
+          // error，若后续重试成功，审计必须记录最终成功而不是残留第一次的失败
+          // （否则「摘要成功但审计报失败」，污染 llm_audit_logs 统计）。
+          if (audit) audit.status = "success";
           const assembler = new BlockAssembler();
           let text = "";
           let aborted = false;

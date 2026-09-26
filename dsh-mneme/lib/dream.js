@@ -361,6 +361,9 @@ async function withEffortFallback(ctx, effort, attempt, fallback, getStreamError
     }
     return result;
   } catch (error) {
+    // dispose/取消中止直接放行，绝不能被误判成 effort 拒收而触发 fallback
+    //（取消后重打一次不带 effort 的调用是浪费，且可能掩盖真实的取消意图）。
+    if (error?.name === "AbortError") throw error;
     const message = String(error?.message ?? error);
     // matches both "reasoning effort" (natural language) and the bare
     // "UNSUPPORTED_REASONING_EFFORT" error code (underscore).

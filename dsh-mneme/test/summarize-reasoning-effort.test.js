@@ -53,7 +53,7 @@ function setup(configOver = {}, stream) {
     requestHeader: () => ({ config: { provider: "deepseek", model: "deepseek-chat" } }),
     events: [userMessage("帮我选型", 1), { seq: 2, type: "turn/end" }]
   };
-  return { store, calls, handler, session };
+  return { store, service, calls, handler, session };
 }
 
 test("issue#315: explicit summarizeReasoningEffort is forwarded on the distill call", async () => {
@@ -146,5 +146,44 @@ test("issue#315: off works like any explicit effort (rejected → retried withou
   assert.equal(calls.length, 2);
   assert.equal(calls[0].reasoningEffort, "off");
   assert.equal(store.count(), 1);
+  store.close();
+});
+
+test("issue#315: successful effort-fallback retry records audit as success, not the first failure", async () => {
+  const { store, service, calls, handler, session } = setup(
+    { summarizeReasoningEffort: "low" },
+    (options) => (async function* () {
+      if (options.reasoningEffort) {
+        // first attempt is rejected (effort unsupported)…
+        yield { type: "finish", reason: { kind: "error", failure: { code: "UNSUPPORTED_REASONING_EFFORT", message: 'reasoning effort "low" rejected' } } };
+        return;
+      }
+      // …but the no-effort retry succeeds.
+      yield { type: "text-delta", delta: ENTRIES_JSON };
+      yield { type: "finish", kind: "ok" };
+    })()
+  );
+  await handler(session, { seq: 2, type: "turn/end" });
+  assert.equal(calls.length, 2, "effort rejection + one retry");
+  const rows = service.listLlmAudits();
+  const summarize = rows.find((r) => r.operation_type === "summarize_compress");
+  assert.ok(summarize, "summarize audit row present");
+  assert.equal(summarize.status, "success",
+    "the retried run must record success, not the first attempt's error status");
+  store.close();
+});
+
+test("issue#315: abort is not misread as an effort rejection even when the message matches the pattern", async () => {
+  const { store, calls, handler, session } = setup(
+    { summarizeReasoningEffort: "low" },
+    () => (async function* () {
+      // The message matches EFFORT_REJECT_RE on purpose: without the AbortError
+      // guard in withEffortFallback this would be misread as an effort rejection
+      // and trigger a wasteful no-effort retry.
+      throw Object.assign(new Error("aborted by dispose: UNSUPPORTED_REASONING_EFFORT"), { name: "AbortError" });
+    })()
+  );
+  await handler(session, { seq: 2, type: "turn/end" });
+  assert.equal(calls.length, 1, "abort must not trigger a no-effort fallback retry");
   store.close();
 });
