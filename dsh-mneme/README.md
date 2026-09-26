@@ -347,6 +347,8 @@ dsh web
 | `dreamSummaryProvider` / `dreamSummaryModel` | 空 | 总览（dream_summarize）专用模型路由（留空 = 沿用 `dreamProvider`/`dreamModel`）。consolidate 有窗口（`dreamMaxSnapshotSize`）而总览输入随库增长，ctx 需求差数倍——用小 ctx 模型跑巩固时把总览指到大 ctx 模型（issue #258） |
 | `dreamSummaryMaxInputs` | `0` | 总览输入条数硬上限（0 = 不设上限）：超过时按 `updated_at` 倒序只保留最新 N 条进总览，防小 ctx 模型被全库输入撑爆；总览口径脚注的条数随实际输入变化 |
 | `dreamMinIntervalMinutes` | `0` | autoDream 最小触发间隔（0-10080，0=不限）：失败/degraded run 也占用 |
+| `dreamPeakHours` | 空 | 巩固侧高峰时段（本地时间，与 `summarizePeakHours` **同一份语法**）：空=关；命中时不调模型、baseline 不刷新（阈值继续累积，留到非高峰一次性巩固）、登记 `skipped`/`peak-hours` 审计并顺延到最近的高峰结束时刻。适合「白天要留算力给交互、巩固挪到夜里」的场景（#239 第 4 项镜像到巩固） |
+| `dreamPeakMaxDeferMinutes` | `120` | 巩固侧高峰顺延上限（0-1440 分钟，0=不设上限）：到点仍处高峰就照常跑，避免长高峰把巩固饿死（#239） |
 | `dreamNarrativeEnabled` | `false` | 叙述条总开关（#164 对齐，v0.8.4）：按共享 tag 主题簇合成叙述 + evidence 证据链，注入候选排除（按需检索，常驻位只留 dream 总览）；也走 feature_flags 白名单，lightMode 强制关 |
 | `dreamNarrativeMinCluster` | `3` | 主题簇合成叙述的最小成员数（2-20，v0.8.4） |
 | `apiToken` | 空 | 可选 API 鉴权 token；设置后写操作与密钥接口要求 `Authorization: Bearer <apiToken>` |
