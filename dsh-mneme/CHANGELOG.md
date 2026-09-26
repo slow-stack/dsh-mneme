@@ -94,6 +94,13 @@
   跳过同口径）。settings 白名单注册（面板可启停）。新增回归 5 条
   （`test/dream-failure-backoff.test.js`，注入时钟，同 dream-peak-hours 房型）。
 
+- **配置说明一页（issue #290）**：新增 [docs/CONFIGURATION.md](docs/CONFIGURATION.md)，
+  以 `src/config.js` schema 为唯一正本逐键过（147 键全覆盖）：按功能面分组（全局与
+  存储 / scope 隔离 / 蒸馏 / 注入 / 巩固 / 睡眠 / 反思与冲突 / 实体 / 检索 / 热度 /
+  API 与工具面 / 运行时），每键给默认值、作用与开启后果/冲突；lightMode 联动键显式
+  标注（文末附 `LIGHT_MODE_OFF` 完整清单），opt-in 默认关的键可见即知，与 settings.js
+  白名单的对应关系在页首一句话交代。两个 README 的文档索引各加一行链接。
+
 - **蒸馏思考强度设置项（issue #315）**：蒸馏（会话总结提炼）LLM 新增 `summarizeReasoningEffort`（`off`/`low`/`medium`/`high`/`none`，默认 `none` = 不发送字段、服务商默认生效，行为与此前一致）。思考型模型蒸馏时推理会烧光输出预算、总结为空或截断（#9 同款失败面，此前仅巩固/睡眠/实体抽取三链路有档位控制），配 `off`/`low` 可封顶推理。档位被模型拒收时自动去掉字段重试一次（与巩固/睡眠同一降级策略，`withEffortFallback` 共享、拒收判别式 `EFFORT_REJECT_RE` 提为单一来源）；面板「功能开关 → 自动总结」下新增档位下拉（opt-in 语义与实体抽取 `entityExtractionReasoning` 对齐，settings 白名单注册）。新增回归 5 条（`test/summarize-reasoning-effort.test.js`）。
 
 - **压缩边缘双落点（issue #249 N3）**：上下文即将被宿主压缩前抢救「正在做什么」，新增

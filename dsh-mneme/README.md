@@ -606,6 +606,7 @@ npm run sync       # 把 src/ 同步到 lib/（发布时由 prepack 钩子自动
 
 > 设计文档位于仓库根 `docs/`，链接以 `../docs/` 相对路径指向（GitHub 上从本目录打开可正常跳转）。
 
+- [配置说明（全键参考）](docs/CONFIGURATION.md)
 - [实体结构化记忆设计](docs/ENTITIES.md)
 - [语义增强架构](docs/SEMANTIC.md)
 - [本地模型部署指南](docs/LOCAL_MODEL.md)
