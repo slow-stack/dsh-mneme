@@ -1,0 +1,49 @@
+name: ✨ Feature 提案 / Feature Request
+description: 新功能或行为改进 — Propose a new feature or behavior change
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        写之前先搜 [已有 issue](https://github.com/slow-stack/mneme/issues?q=is%3Aissue) 与 [Discussions](https://github.com/slow-stack/mneme/discussions)——方向征询类的话题更适合先发 Discussion 聊出共识再立项。
+        / Search existing issues & Discussions first. Direction-level ideas fit a Discussion better.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的问题 / Problem
+      description: 先说场景与痛点，再提方案——问题定义比方案更重要。
+        / Describe the scenario and pain point first; the problem matters more than the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 期望的方案 / Proposed solution
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 考虑过的替代方案 / Alternatives considered
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: gates
+    attributes:
+      label: 实现口径确认 / Implementation gates (维护者会逐项核对)
+      options:
+        - label: 新行为开关应 opt-in 默认关，注册进 settings 白名单 / new toggles opt-in by default + settings whitelist
+        - label: 涉及 schema 变更时需配幂等迁移 / idempotent migration for schema changes
+        - label: 接受带回归测试的验收线 / acceptance includes regression tests
+
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: 披露 / Disclosure
+      options:
+        - label: 本提案由 AI 辅助整理（人工审核后提交）/ Drafted with AI assistance, reviewed by a human
+          required: false
