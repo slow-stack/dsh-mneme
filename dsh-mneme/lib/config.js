@@ -145,6 +145,15 @@ export const Config = z.object({
   // 起算，失败/degraded 的 run 也占用间隔；间隔内的触发请求静默跳过，下一次
   // 写入事件会重新评估。
   dreamMinIntervalMinutes: z.natural().min(0).max(10080).default(0),
+  // Issue #292（#135 派生）：autoDream 连续失败退避（opt-in，默认关 = 行为与
+  // 现状逐字节一致）。开启后调度器对连续失败做指数退避：有效最小间隔 =
+  // dreamMinIntervalMinutes × 2^连续失败数（成功一次清零恢复），封顶 30 分钟。
+  // #89 的最小间隔闸失败 run 也占用，但间隔恒定——恒定失败的模型（#135 空体
+  // 面）会按固定节奏连发刷爆配额；退避把下次重试按失败次数指数推远。基数取
+  // dreamMinIntervalMinutes：基数为 0 时无闸可翻倍，本键不自己产生间隔（先配
+  // dreamMinIntervalMinutes 再开本键）。与 dreamPeakHours / dreamMinIntervalMinutes
+  // 同族（节流阀，不新增任何 LLM 调用），故不进 LIGHT_MODE_OFF。
+  autoDreamFailureBackoff: z.boolean().default(false),
   // Issue #239（第 4 项，错峰队列）镜像到巩固：高峰期不做梦。与
   // summarizePeakHours 同一份时段语法（复用 src/summarize.js 的 parsePeakSpec /
   // isInPeakWindow / nextOffPeakAt，不另写解析器）：逗号分隔、可带星期前缀、支持

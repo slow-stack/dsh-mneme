@@ -756,7 +756,11 @@ export async function maintainIndexAfterDream(decisions, service, semantic) {
   if (embedder.modelHash) vectorIndex.markModel?.(embedder.modelHash, embedder.dimension);
 }
 
-export function createDreamScheduler({ onRun, thresholdCount = 10, thresholdChars = 5000, delayMs = 2000, minIntervalMs = 0, logger, semantic = null, lastRunAtSeed = 0, peakHours = "", peakMaxDeferMinutes = 120, auditPeakSkip = null, now = () => Date.now(), setTimeoutFn = setTimeout, clearTimeoutFn = clearTimeout }) {
+// Issue #292：连续失败退避的间隔封顶（30 分钟）。封顶只拦指数「增长」，不把
+// 用户配得比这更大的 dreamMinIntervalMinutes 基数压小（见 effectiveMinIntervalMs）。
+const FAILURE_BACKOFF_CAP_MS = 30 * 60 * 1000;
+
+export function createDreamScheduler({ onRun, thresholdCount = 10, thresholdChars = 5000, delayMs = 2000, minIntervalMs = 0, failureBackoff = false, logger, semantic = null, lastRunAtSeed = 0, peakHours = "", peakMaxDeferMinutes = 120, auditPeakSkip = null, now = () => Date.now(), setTimeoutFn = setTimeout, clearTimeoutFn = clearTimeout }) {
   let pendingTimer = null;
   // Issue #239（第 4 项）镜像到巩固：高峰顺延定时器。与 pendingTimer 分开——两者
   // 语义不同（一个是「马上要跑」，一个是「等出高峰再跑」），合成一个变量会让
@@ -771,6 +775,21 @@ export function createDreamScheduler({ onRun, thresholdCount = 10, thresholdChar
   // lastRunAtSeed：调用方从 dream_runs 审计表读出的上次开跑时刻——
   // 内存变量进程重启即归零，闸门对新实例放行 → 重启后立刻连发（#89 根因）。
   let lastRunAt = lastRunAtSeed;
+  // Issue #292（#135 派生）：同会话内连续失败计数。失败（onRun 抛错或返回
+  // ok:false）+1，成功清零；无返回结果的 run（no-op 桩）视为完成且无失败，
+  // 不动计数。纯内存变量、宿主重启归零——跨重启的冷却由 lastRunAtSeed（#291）
+  // 持久化负责，两者不重叠。
+  let consecutiveFailures = 0;
+
+  // Issue #292：有效最小间隔 = 基数 × 2^连续失败数，封顶 30 分钟。退避关闭或
+  // 尚无失败时逐字节返回基数（默认关 = 行为与现状一致）。基数 0 无闸可翻倍
+  // （本键不自己产生间隔）；封顶取 max(基数, cap)，指数再大也不会把用户配的
+  // 大基数压小。2^N 溢出成 Infinity 由 Math.min 兜到 cap，无需另设上限位数。
+  function effectiveMinIntervalMs() {
+    if (!failureBackoff || consecutiveFailures <= 0) return minIntervalMs;
+    const cap = Math.max(minIntervalMs, FAILURE_BACKOFF_CAP_MS);
+    return Math.min(minIntervalMs * 2 ** consecutiveFailures, cap);
+  }
 
   function shouldTrigger(service) {
     const memories = service.all().filter((m) => !m.archived && m.type !== "summary" && m.type !== "document");
@@ -783,8 +802,12 @@ export function createDreamScheduler({ onRun, thresholdCount = 10, thresholdChar
 
   function maybeSchedule(service) {
     if (disposed || running || pendingTimer || deferTimer) return false;
-    // Issue #89（请求 2）：最小触发间隔闸门。
-    if (minIntervalMs > 0 && now() - lastRunAt < minIntervalMs) return false;
+    // Issue #89（请求 2）：最小触发间隔闸门。#292 退避开启时改用指数放大的
+    // 有效间隔：连续失败越多，下次放行越晚（恒定失败的模型不再按固定节奏连发，
+    // 只会越打越稀）。失败 run 本就占用间隔（lastRunAt 在开跑时刷新，见 #89），
+    // 这里放大的是同一道闸，不新增任何状态面。间隔内的触发静默跳过：没有调用
+    // 发生，也就没有可审计的对象（与 #89 口径一致，不写审计行）。
+    if (minIntervalMs > 0 && now() - lastRunAt < effectiveMinIntervalMs()) return false;
     const { trigger, count, chars } = shouldTrigger(service);
     if (!trigger) return false;
     // Issue #239（第 4 项，错峰队列）镜像到巩固：命中高峰就不调模型。与蒸馏的差别
@@ -856,17 +879,25 @@ export function createDreamScheduler({ onRun, thresholdCount = 10, thresholdChar
         // keeps the old baseline. A run that reports nothing is treated as
         // completed without failure (no-op hooks / minimal test doubles).
         if (result && result.ok) {
+          consecutiveFailures = 0; // Issue #292：成功清零，下次触发回到基数间隔
           try {
             baseline = shouldTrigger(service);
           } catch (error) {
             // Store closed mid-flight: keep the last known baseline.
             logger?.warn?.(`dsh-mneme dream: baseline refresh failed: ${String(error)}`);
           }
+        } else if (result) {
+          // Issue #292：ok:false（LLM 失败 / 空体 / 整单拒绝）计入连败；degraded
+          // 的 run 走 ok:true（LLM 本身成功了，只是决策被部分应用）→ 算成功、清零。
+          // 退避关闭时该计数没有消费者，行为与此前逐字节一致。
+          consecutiveFailures += 1;
         }
+        // result 为空（no-op 桩 / 最小测试替身）＝完成且无失败：基线与连败计数都不动。
       })
       .catch((error) => {
         logger?.warn?.(`dsh-mneme dream: run failed: ${error?.message ?? error}`);
         // Failed runs do not refresh the baseline.
+        consecutiveFailures += 1; // Issue #292：抛错同样计入连败
       })
       .finally(() => {
         running = false;

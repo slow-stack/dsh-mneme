@@ -63,6 +63,9 @@ const FEATURE_FLAG_BOOLEANS = [
   "documentMemoryEnabled",
   "codingRetrospect",
   "autoDream",
+  // Issue #292：autoDream 连续失败退避（默认关）。基数是 dreamMinIntervalMinutes，
+  // 有效间隔 = 基数 × 2^连续失败数（成功清零），封顶 30 分钟；面板可启停。
+  "autoDreamFailureBackoff",
   "sleepModeEnabled",
   "heatEnabled",
   "hybridInject",

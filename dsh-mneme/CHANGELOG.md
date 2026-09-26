@@ -83,6 +83,17 @@
 
 ## 🆕 新增
 
+- **autoDream 连续失败退避（issue #292，#135 派生）**：新增 opt-in 键
+  `autoDreamFailureBackoff`（默认关 = 行为与此前逐字节一致）。#89 的最小间隔闸对失败
+  run 也生效，但间隔恒定——恒定失败的模型（#135 空体面）会按固定节奏连发刷爆配额；
+  开启后调度器对连续失败做指数退避：有效最小间隔 = `dreamMinIntervalMinutes` ×
+  2^连续失败数（封顶 30 分钟，只拦增长、不把用户配得更大的基数压小），成功一次清零
+  恢复基数。基数取 `dreamMinIntervalMinutes`：基数为 0 时无闸可翻倍，本键不自己产生
+  间隔。计数是调度器内存变量、宿主重启归零（跨重启的冷却由 #291 的 lastRunAt 持久化
+  负责，两不重叠）；被退避推迟的触发没有任何调用发生，也不写审计行（与 #89 间隔内
+  跳过同口径）。settings 白名单注册（面板可启停）。新增回归 5 条
+  （`test/dream-failure-backoff.test.js`，注入时钟，同 dream-peak-hours 房型）。
+
 - **蒸馏思考强度设置项（issue #315）**：蒸馏（会话总结提炼）LLM 新增 `summarizeReasoningEffort`（`off`/`low`/`medium`/`high`/`none`，默认 `none` = 不发送字段、服务商默认生效，行为与此前一致）。思考型模型蒸馏时推理会烧光输出预算、总结为空或截断（#9 同款失败面，此前仅巩固/睡眠/实体抽取三链路有档位控制），配 `off`/`low` 可封顶推理。档位被模型拒收时自动去掉字段重试一次（与巩固/睡眠同一降级策略，`withEffortFallback` 共享、拒收判别式 `EFFORT_REJECT_RE` 提为单一来源）；面板「功能开关 → 自动总结」下新增档位下拉（opt-in 语义与实体抽取 `entityExtractionReasoning` 对齐，settings 白名单注册）。新增回归 5 条（`test/summarize-reasoning-effort.test.js`）。
 
 - **压缩边缘双落点（issue #249 N3）**：上下文即将被宿主压缩前抢救「正在做什么」，新增
