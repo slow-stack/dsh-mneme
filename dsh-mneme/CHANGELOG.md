@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.8.8] - 2026-09-27
+
+## 🆕 新增
+
+- **蒸馏思考强度设置项（issue #315，PR #316）**：`summarizeReasoningEffort`（`off`/`low`/`medium`/`high`/`none`，默认 `none` = 不发送字段、行为不变）。思考型模型蒸馏时推理烧光输出预算、总结为空，配 `off`/`low` 可封顶推理；档位被拒自动去字段重试一次（`withEffortFallback` 共享、拒收判别式 `EFFORT_REJECT_RE` 提单一来源）；面板「功能开关 → 自动总结」下新增档位下拉。
+- **压缩边缘双落点（issue #249 N3，PR #314）**：`continuityRescueEnabled`（默认关）——宿主压缩前抢救「正在做什么」：连续性提案落新表 `continuity_proposals`（`(session_id, kind)` 唯一、满 200 弃新）+ 同一份快照追加为序列末尾插件消息（压缩摘要器只看对话内容）。三字段确定性抽取、全程不调模型；降级为持久规则不算失败。新增回归 14 条（`test/continuity.test.js`），文档见 [docs/CONTINUITY.md](docs/CONTINUITY.md)。
+- **错峰队列镜像到巩固（issue #239 第 4 项，PR #320）**：`dreamPeakHours` + `dreamPeakMaxDeferMinutes`（默认 120）——高峰不调模型，skip 审计 + 择时补跑，baseline 不刷新（攒到非高峰一次大 run）；时段解析三件套抽零依赖模块 `src/peak-hours.js`，顺带消除 #316 引入的 dream↔summarize 循环依赖。新增回归（`test/dream-peak-hours.test.js`）。
+- **autoDream 连续失败退避（issue #292，PR #322）**：`autoDreamFailureBackoff`（默认关 = 行为逐字节不变）——开启后有效最小间隔 = `dreamMinIntervalMinutes` × 2^连续失败数，成功清零，封顶 30 分钟（只拦增长、不压小用户配的大基数）。计数内存态，跨重启冷却由 #291 持久化负责。新增回归 5 条（`test/dream-failure-backoff.test.js`）。
+- **配置说明一页（issue #290，PR #322）**：新增 [docs/CONFIGURATION.md](docs/CONFIGURATION.md)——以 `src/config.js` schema 为唯一正本，147 键全覆盖：按功能面分组，每键给默认值 / 作用 / 开启后果与冲突；lightMode 联动键逐行标注。两个 README 文档索引各加一行。
+
+## 🧹 工程
+
+- **GitHub issue 模板三件套（PR #321）**：bug / feature YAML forms（双语、环境字段对齐历史高质量报告）+ config.yml（空白 issue 关闭、问答引导 Discussions、漏洞引导私密通告）；feature 模板内置实现口径自查与 AI 辅助披露。
+- **双 README 重复徽章行去重（PR #319）**：9-24 合并解冲突复制出的 tests 徽章与 `npm test` 注释重复行（根 README 三处、包内两处）手工去重——`badge:sync` 全文替换只会一起刷新、永不自愈。
+
 ## [0.8.7] - 2026-09-24
 
 ## 🐛 修复
