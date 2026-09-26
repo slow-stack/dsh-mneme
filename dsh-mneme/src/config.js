@@ -145,6 +145,22 @@ export const Config = z.object({
   // 起算，失败/degraded 的 run 也占用间隔；间隔内的触发请求静默跳过，下一次
   // 写入事件会重新评估。
   dreamMinIntervalMinutes: z.natural().min(0).max(10080).default(0),
+  // Issue #239（第 4 项，错峰队列）镜像到巩固：高峰期不做梦。与
+  // summarizePeakHours 同一份时段语法（复用 src/summarize.js 的 parsePeakSpec /
+  // isInPeakWindow / nextOffPeakAt，不另写解析器）：逗号分隔、可带星期前缀、支持
+  // 跨零点。空串 = 关闭，行为与现状逐字节一致。
+  //   "09:00-18:00"                      每天 09:00-18:00
+  //   "mon-fri 08:00-12:00,14:00-18:00"  工作日两段（按高峰计费的供应商即此形态）
+  // 为什么巩固比蒸馏更该有这道闸：单次巩固的输入是整窗快照（dreamMaxSnapshotSize
+  // 条），实测一次 run 的 LLM 时长可达数分钟量级，撞上高峰时既贵又慢；而它由写入
+  // 事件触发、没有天然的「等到空闲再跑」路径。命中高峰时：不调 LLM、不刷新
+  // baseline（阈值继续累积，留到非高峰一次性巩固），登记一行 status='skipped' /
+  // error_message='peak-hours' 审计，并按下面的上限择时补跑。任一写法非法则整串
+  // 按「未配置」处理——排程是省钱手段，绝不该因为写错格式把巩固停掉。
+  dreamPeakHours: z.string().default(""),
+  // 高峰顺延上限（分钟，0 = 不设上限）：到点仍处高峰就照常跑，避免整天高峰把巩固
+  // 饿死。默认 120，与 summarizePeakMaxDeferMinutes 对齐。仅在时段串非空时生效。
+  dreamPeakMaxDeferMinutes: z.natural().min(0).max(1440).default(120),
   // 巩固模型路由（settings panel「巩固模型」/ dreamProvider+dreamModel）：
   // dream 的记忆沉淀专用 LLM 路由，显式配置优先于 agent 默认模型（config-first，
   // Issue #25）。模型分类声明：

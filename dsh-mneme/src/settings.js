@@ -117,6 +117,8 @@ const FEATURE_FLAG_INT_RANGES = {
   summarizeMaxRunsPerSession: [0, 1000],
   // Issue #239 第 4 项：高峰顺延上限（分钟，0 = 不设上限）。
   summarizePeakMaxDeferMinutes: [0, 1440],
+  // Issue #239 第 4 项镜像到巩固：同一口径（分钟，0 = 不设上限）。
+  dreamPeakMaxDeferMinutes: [0, 1440],
   // Issue #125：hybrid 候选量上限（0 = 复用 dreamMaxSnapshotSize）。
   dreamCandidateMax: [0, 5000],
   // Issue #164①：注入单条正文截断上限（默认 300 = 既有行为）。
@@ -159,7 +161,9 @@ const FEATURE_FLAG_STRINGS = [
   "localEmbedModel",
   "ollamaModel",
   // Issue #239 第 4 项：高峰时段串（"09:00-18:00"，空串 = 关闭）。
-  "summarizePeakHours"
+  "summarizePeakHours",
+  // Issue #239 第 4 项镜像到巩固：同一份时段语法，空串 = 关闭（行为与现状一致）。
+  "dreamPeakHours"
 ];
 // URL 字符串开关：trim 后必须为空或合法 http/https URL（new URL() 校验协议，
 // 拒绝其余协议——这是 SSRF 防线的一部分）。

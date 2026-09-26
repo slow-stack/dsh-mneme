@@ -2,6 +2,11 @@ import { validateDecisions, applyDecisions } from "./dream/decisions.js";
 import { clusterMemories, findPotentialConflicts, cosineSimilarity } from "./dream/clustering.js";
 import { clusterByTag, intersectEvidence } from "./dream/narratives.js";
 import { scopeKeyOf } from "./scope.js";
+// Issue #239（第 4 项）镜像到巩固：错峰时段解析与「最近的高峰结束时刻」直接复用
+// 蒸馏侧已导出的纯函数，不另写一份解析器——两份实现漂移会让「同一个时段串在两处
+// 行为不同」，那比没有这个功能更糟。summarize.js 只依赖 dsh-llm 与 lang.js，
+// 不反向依赖 dream.js，无循环引用。
+import { isInPeakWindow, nextOffPeakAt } from "./summarize.js";
 import { createHash, randomUUID } from "node:crypto";
 import { STR, langOf } from "./lang.js";
 export { validateDecisions, applyDecisions, withEffortFallback, describeStreamFailure, resolveDreamEffort, resolveRoute };
@@ -750,8 +755,12 @@ export async function maintainIndexAfterDream(decisions, service, semantic) {
   if (embedder.modelHash) vectorIndex.markModel?.(embedder.modelHash, embedder.dimension);
 }
 
-export function createDreamScheduler({ onRun, thresholdCount = 10, thresholdChars = 5000, delayMs = 2000, minIntervalMs = 0, logger, semantic = null, lastRunAtSeed = 0 }) {
+export function createDreamScheduler({ onRun, thresholdCount = 10, thresholdChars = 5000, delayMs = 2000, minIntervalMs = 0, logger, semantic = null, lastRunAtSeed = 0, peakHours = "", peakMaxDeferMinutes = 120, auditPeakSkip = null, now = () => Date.now(), setTimeoutFn = setTimeout, clearTimeoutFn = clearTimeout }) {
   let pendingTimer = null;
+  // Issue #239（第 4 项）镜像到巩固：高峰顺延定时器。与 pendingTimer 分开——两者
+  // 语义不同（一个是「马上要跑」，一个是「等出高峰再跑」），合成一个变量会让
+  // maybeSchedule 的守卫在顺延期间把新的写入触发误当成「已有待跑」而吞掉。
+  let deferTimer = null;
   let running = false;
   let disposed = false;
   let baseline = { count: 0, chars: 0 };
@@ -772,51 +781,103 @@ export function createDreamScheduler({ onRun, thresholdCount = 10, thresholdChar
   }
 
   function maybeSchedule(service) {
-    if (disposed || running || pendingTimer) return false;
+    if (disposed || running || pendingTimer || deferTimer) return false;
     // Issue #89（请求 2）：最小触发间隔闸门。
-    if (minIntervalMs > 0 && Date.now() - lastRunAt < minIntervalMs) return false;
+    if (minIntervalMs > 0 && now() - lastRunAt < minIntervalMs) return false;
     const { trigger, count, chars } = shouldTrigger(service);
     if (!trigger) return false;
-    pendingTimer = setTimeout(() => {
+    // Issue #239（第 4 项，错峰队列）镜像到巩固：命中高峰就不调模型。与蒸馏的差别
+    // 在于巩固是**全局单实例**（蒸馏按会话各挂一个定时器），所以这里只需要一个
+    // deferTimer，且不需要 deferredRuns 那套按会话去重。
+    // baseline 刻意不刷新：阈值继续累积，留到非高峰一次性巩固（一次大 run 比多次
+    // 小 run 省）。审计只登记一行 skip——「为什么不再做梦了」必须对用户可观测。
+    if (isInPeakWindow(new Date(now()), peakHours)) {
+      try {
+        auditPeakSkip?.({ count, chars });
+      } catch (error) {
+        // 记账是 best-effort：写审计行失败只 warn，绝不反噬调度本身。
+        logger?.warn?.(`dsh-mneme dream: peak-hours audit failed: ${String(error)}`);
+      }
+      scheduleDeferredRun(service);
+      return false;
+    }
+    pendingTimer = setTimeoutFn(() => {
       pendingTimer = null;
-      running = true;
-      lastRunAt = Date.now();
-      // Defer the onRun invocation so a synchronous throw cannot escape the
-      // timer callback (which would crash the process) and skip the teardown.
-      // Errors are logged, never swallowed silently. inFlight lets dispose()
-      // await the running consolidation before the caller closes the store.
-      inFlight = Promise.resolve()
-        .then(() => (onRun ? onRun() : Promise.resolve({ ok: true, skipped: true })))
-        .then((result) => {
-          // Refresh the baseline only for a successful run (design §5.3: an
-          // LLM failure must not move the baseline, so the next write can
-          // immediately re-trigger a retry). A `{ok:false}` result or a throw
-          // keeps the old baseline. A run that reports nothing is treated as
-          // completed without failure (no-op hooks / minimal test doubles).
-          if (result && result.ok) {
-            try {
-              baseline = shouldTrigger(service);
-            } catch (error) {
-              // Store closed mid-flight: keep the last known baseline.
-              logger?.warn?.(`dsh-mneme dream: baseline refresh failed: ${String(error)}`);
-            }
-          }
-        })
-        .catch((error) => {
-          logger?.warn?.(`dsh-mneme dream: run failed: ${error?.message ?? error}`);
-          // Failed runs do not refresh the baseline.
-        })
-        .finally(() => {
-          running = false;
-          inFlight = null;
-        });
+      startRun(service);
     }, delayMs);
     return true;
   }
 
+  /**
+   * Issue #239：高峰内择时补跑——挂到「距当前最近的一个高峰结束时刻」，被
+   * peakMaxDeferMinutes 截断时到点照跑（bypassPeak），长高峰不会把巩固饿死。
+   * 定时器 unref：不阻止宿主退出。重复触发不叠加（deferTimer 已在 maybeSchedule
+   * 的守卫里，这里再判一次以防从其它路径进来）。
+   */
+  function scheduleDeferredRun(service) {
+    if (disposed || deferTimer) return;
+    const at = nextOffPeakAt(new Date(now()), peakHours);
+    if (!at) return;
+    const maxDeferMs = (peakMaxDeferMinutes ?? 0) * 60000;
+    let delay = Math.max(0, at.getTime() - now());
+    const capped = maxDeferMs > 0 && delay > maxDeferMs;
+    if (capped) delay = maxDeferMs;
+    deferTimer = setTimeoutFn(() => {
+      deferTimer = null;
+      if (disposed) return;
+      // 截断放行时仍在高峰：不再重新顺延（否则长高峰里会无限顺延，等于把巩固
+      // 关掉）。直接开跑，与蒸馏的 bypassPeak 同口径。
+      if (!capped && isInPeakWindow(new Date(now()), peakHours)) {
+        // 理论上到点已出高峰；时钟跳变/时段串被改小可能落回高峰内，此时再顺延一次。
+        scheduleDeferredRun(service);
+        return;
+      }
+      logger?.info?.(`dsh-mneme dream: peak-hours deferred run firing (capped=${capped}, delayMs=${delay})`);
+      startRun(service);
+    }, delay);
+    deferTimer.unref?.();
+  }
+
+  /**
+   * 真正开跑。抽出来是因为两条路径都要用：写入触发的正常路径，与高峰顺延后的
+   * 补跑路径。onRun 的调用刻意放在 Promise 里——同步抛出的异常若逃出 timer 回调
+   * 会直接崩掉进程并跳过收尾。inFlight 让 dispose() 能等完这一轮再关库。
+   */
+  function startRun(service) {
+    running = true;
+    lastRunAt = now();
+    inFlight = Promise.resolve()
+      .then(() => (onRun ? onRun() : Promise.resolve({ ok: true, skipped: true })))
+      .then((result) => {
+        // Refresh the baseline only for a successful run (design §5.3: an
+        // LLM failure must not move the baseline, so the next write can
+        // immediately re-trigger a retry). A `{ok:false}` result or a throw
+        // keeps the old baseline. A run that reports nothing is treated as
+        // completed without failure (no-op hooks / minimal test doubles).
+        if (result && result.ok) {
+          try {
+            baseline = shouldTrigger(service);
+          } catch (error) {
+            // Store closed mid-flight: keep the last known baseline.
+            logger?.warn?.(`dsh-mneme dream: baseline refresh failed: ${String(error)}`);
+          }
+        }
+      })
+      .catch((error) => {
+        logger?.warn?.(`dsh-mneme dream: run failed: ${error?.message ?? error}`);
+        // Failed runs do not refresh the baseline.
+      })
+      .finally(() => {
+        running = false;
+        inFlight = null;
+      });
+  }
+
   async function dispose() {
     disposed = true;
-    if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; }
+    if (pendingTimer) { clearTimeoutFn(pendingTimer); pendingTimer = null; }
+    // Issue #239：高峰顺延定时器同样要清，否则进程关闭后仍会触发一次巩固。
+    if (deferTimer) { clearTimeoutFn(deferTimer); deferTimer = null; }
     // An in-flight run is left to complete naturally (its LLM calls are
     // already paid for and aborting would discard the work). Await it so the
     // caller can close the store only after every write has landed.

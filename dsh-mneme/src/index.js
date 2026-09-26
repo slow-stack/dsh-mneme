@@ -494,6 +494,32 @@ export const apply = (ctx, config) => {
       logger: ctx.logger,
       semantic: { embedder, vectorIndex },
       lastRunAtSeed: store.lastDreamRunAt("auto"),
+      // Issue #239（第 4 项）镜像到巩固：高峰期不做梦，顺延到最近的高峰结束时刻。
+      peakHours: cfg.dreamPeakHours ?? "",
+      peakMaxDeferMinutes: cfg.dreamPeakMaxDeferMinutes ?? 120,
+      // 跳过时的审计行在这里落地（调度器只拿到 service，拿不到 config 的
+      // llmAudit 开关与巩固模型路由）。口径与 runAuditedLlm 一致：审计关掉就
+      // 不写；写失败只 warn，绝不反噬调度（CONTRIBUTING 的 fail-safe 硬约定）。
+      auditPeakSkip: ({ count, chars }) => {
+        if (cfg?.llmAudit?.enabled === false || typeof service?.saveLlmAudit !== "function") return;
+        const modelId = cfg.dreamProvider && cfg.dreamModel ? `${cfg.dreamProvider}:${cfg.dreamModel}` : "";
+        service.saveLlmAudit({
+          timestamp: new Date().toISOString(),
+          trigger_source: "autoDream",
+          operation_type: "dream_consolidate",
+          model_id: modelId,
+          input_tokens: 0,
+          output_tokens: 0,
+          total_tokens: 0,
+          cost_usd: 0,
+          duration_ms: 0,
+          status: "skipped",
+          error_message: "peak-hours",
+          related_memory_ids: [],
+          // 观测用：跳过时窗口里积了多少（阈值继续累积，不是丢弃）。
+          metadata: JSON.stringify({ count, chars })
+        });
+      },
       onRun: () => (dream ? dream.runDream(ctx, service, cfg) : Promise.resolve({ ok: true, skipped: true }))
     });
     service.setDreamHook(() => dream.maybeSchedule(service));
