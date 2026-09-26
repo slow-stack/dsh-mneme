@@ -465,6 +465,10 @@ window.__ModuleLoader__.load({
         "memory.features.dreamProvider": "巩固模型 Provider",
         "memory.features.dreamModel": "巩固用模型名",
         "memory.features.dreamModelHint": "留空 = 跟随主对话模型；只影响记忆巩固（autoDream）用的模型",
+        "memory.features.dreamPeakHours": "高峰时段（不做梦）",
+        "memory.features.dreamPeakHours.hint": "空 = 关闭。逗号分隔、可带星期前缀、支持跨零点，如 09:00-18:00 或 mon-fri 08:00-12:00,14:00-18:00。命中时段不调模型，顺延到最近的高峰结束时刻补跑（最多顺延 dreamPeakMaxDeferMinutes 分钟，避免长高峰把巩固饿死）",
+        "memory.features.summarizePeakHours": "高峰时段（不蒸馏）",
+        "memory.features.summarizePeakHours.hint": "空 = 关闭。与上方巩固侧同一份时段语法；命中时蒸馏顺延到非高峰、窗口累积后一次蒸",
         "memory.features.sleepProvider": "睡眠 Provider",
         "memory.features.sleepModel": "睡眠模型",
         "memory.features.sleepModelHint": "留空 = 用巩固模型或当前模型；建议选非思考模型",
@@ -862,6 +866,10 @@ window.__ModuleLoader__.load({
         "memory.features.dreamProvider": "Consolidation provider",
         "memory.features.dreamModel": "Consolidation model",
         "memory.features.dreamModelHint": "Leave empty to follow the main conversation model; only affects autoDream consolidation",
+        "memory.features.dreamPeakHours": "Peak hours (no dreaming)",
+        "memory.features.dreamPeakHours.hint": "Empty = off. Comma-separated windows, optional weekday prefix, midnight-crossing allowed — e.g. 09:00-18:00 or mon-fri 08:00-12:00,14:00-18:00. Inside these windows no LLM call is made; the run is deferred to the nearest peak-end (capped by dreamPeakMaxDeferMinutes so an all-day peak cannot starve consolidation)",
+        "memory.features.summarizePeakHours": "Peak hours (no distillation)",
+        "memory.features.summarizePeakHours.hint": "Empty = off. Same window syntax as the consolidation side above; inside a peak, distillation is deferred and the window accumulates for one bigger run",
         "memory.features.sleepProvider": "Sleep provider",
         "memory.features.sleepModel": "Sleep model",
         "memory.features.sleepModelHint": "Leave empty to reuse the consolidation model; a non-reasoning model is recommended",
@@ -1960,7 +1968,10 @@ window.__ModuleLoader__.load({
     const FEATURE_ADVANCED_BOOLS = ["hybridInject", "selectiveInjectEnabled", "adaptiveThresholdEnabled", "reflectionUpdateEnabled", "reflectionFailureTracking", "conflictFreezeEnabled", "trustEpistemicWeighting"];
     // 字符串键（blur/Enter 提交，空串合法 = 跟随默认）：巩固模型与语义
     // 检索路线。embedProvider 是枚举，用下拉单独渲染。
-    const FEATURE_STRINGS = ["dreamProvider", "dreamModel", "sleepProvider", "sleepModel", "entityExtractionProvider", "entityExtractionModel", "localEmbedModel", "ollamaBaseUrl", "ollamaModel"];
+    const FEATURE_STRINGS = ["dreamProvider", "dreamModel", "sleepProvider", "sleepModel", "entityExtractionProvider", "entityExtractionModel", "localEmbedModel", "ollamaBaseUrl", "ollamaModel",
+      // Issue #239 第 4 项：错峰时段串（巩固侧与蒸馏侧）。此前只有后端白名单、
+      // 面板调不到——两个错峰键一个能调一个不能比都不给更让人困惑。
+      "dreamPeakHours", "summarizePeakHours"];
     const EMBED_PROVIDERS = ["openai", "local", "ollama"];
     // 实体抽取思考强度（issue #109）：与后端 FEATURE_FLAG_ENUMS 枚举对齐。
     const ENTITY_REASONING = ["none", "low", "medium", "high"];
@@ -2222,7 +2233,11 @@ window.__ModuleLoader__.load({
         Array.isArray(routes)
           ? routeSelects("dreamProvider", "dreamModel", dreamTest, setDreamTest, "dreamReasoningEffort")
           : h(react.Fragment, null, strRow("dreamProvider"), strRow("dreamModel")),
-        h("div", { className: "mneme-featsubhint" }, t("memory.features.dreamModelHint"))
+        h("div", { className: "mneme-featsubhint" }, t("memory.features.dreamModelHint")),
+        // Issue #239 第 4 项镜像到巩固：高峰时段串（空 = 关闭）。放在 autoDream
+        // 子块内——它是巩固的排程，开关关掉时不该还在界面上留着可编辑的输入框。
+        strRow("dreamPeakHours"),
+        h("div", { className: "mneme-featsubhint" }, t("memory.features.dreamPeakHours.hint"))
       );
 
       // 睡眠模型：sleepModeEnabled 开着才展开（sleepProvider/sleepModel 随本版
@@ -2266,7 +2281,11 @@ window.__ModuleLoader__.load({
           },
             SUMMARIZE_REASONING.map((r) => h("option", { key: r, value: r }, t(`memory.features.summarizeReasoningEffort.${r}`))))
         ),
-        h("div", { className: "mneme-featsubhint" }, t("memory.features.summarizeReasoningEffort.hint"))
+        h("div", { className: "mneme-featsubhint" }, t("memory.features.summarizeReasoningEffort.hint")),
+        // Issue #239 第 4 项：蒸馏侧错峰时段串（空 = 关闭）。与思考强度同处一个
+        // autoSummarize 子块——两处错峰开关都能在面板上调（巩固侧见 dreamSub）。
+        strRow("summarizePeakHours"),
+        h("div", { className: "mneme-featsubhint" }, t("memory.features.summarizePeakHours.hint"))
       );
 
       if (error && !state) return h("section", { className: "mneme-set-card" },
