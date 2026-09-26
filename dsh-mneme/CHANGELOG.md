@@ -77,6 +77,10 @@
 
 ## [Unreleased]
 
+## 🧹 清理
+
+- **双 README 重复徽章行去重**：9-24 合并提交（37e77f1，解 #275 车道与 main 的冲突）把 tests 徽章行与中英 `npm test` 命令注释各复制了一份，根 README 三处、包内 README 两处重复；`badge:sync` 的全文正则替换只会把重复行一起刷新、永不自愈，此番手工去重（各留一行）。
+
 ## 🆕 新增
 
 - **蒸馏思考强度设置项（issue #315）**：蒸馏（会话总结提炼）LLM 新增 `summarizeReasoningEffort`（`off`/`low`/`medium`/`high`/`none`，默认 `none` = 不发送字段、服务商默认生效，行为与此前一致）。思考型模型蒸馏时推理会烧光输出预算、总结为空或截断（#9 同款失败面，此前仅巩固/睡眠/实体抽取三链路有档位控制），配 `off`/`low` 可封顶推理。档位被模型拒收时自动去掉字段重试一次（与巩固/睡眠同一降级策略，`withEffortFallback` 共享、拒收判别式 `EFFORT_REJECT_RE` 提为单一来源）；面板「功能开关 → 自动总结」下新增档位下拉（opt-in 语义与实体抽取 `entityExtractionReasoning` 对齐，settings 白名单注册）。新增回归 5 条（`test/summarize-reasoning-effort.test.js`）。
