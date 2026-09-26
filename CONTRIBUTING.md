@@ -118,6 +118,8 @@ Almost every change — **fixes and small features included** — starts from an
 2. **One PR per Issue**: reference it in the PR body (`Closes #N` / `Fixes #N` when the PR fully resolves it).
 3. **Keep the PR minimal**: behavior changes belong in `src/` (+ `test/`); run `npm run sync` so `lib/` follows (`check-sync` will fail CI otherwise); `npm test` green; user-visible changes include their README line in the same PR.
 4. **CI must be green** (Node 22/24 × Linux/Windows, full suite, Codecov) before review.
+5. **A claimed Issue belongs to the claimant**: the claim comment is the lock — a second PR on the same Issue will be marked `duplicate` and closed, unless the first PR is clearly low-quality or has gone silent.
+6. **Claims expire**: a claim with no PR within 2 weeks is released — anyone may re-claim it on the Issue thread.
 
 ---
 
