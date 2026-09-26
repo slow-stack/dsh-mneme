@@ -1,0 +1,66 @@
+name: 🐛 Bug 报告 / Bug Report
+description: 功能异常、崩溃、数据错误 — Create a bug report
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！写之前先搜一下 [已有 issue](https://github.com/slow-stack/mneme/issues?q=is%3Aissue)，避免重复。
+        请尽量填写完整——环境信息不全的 bug 大概率要多花一个来回才能定位。
+        / Thanks for reporting! Please search existing issues first. Complete env info makes debugging much faster.
+
+  - type: textarea
+    id: observed
+    attributes:
+      label: 现象 / What happened
+      description: 具体表现是什么？与预期不符在哪？/ What did you see vs. what did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: |
+        最小复现路径，例如：开了什么开关 → 做了什么操作 → 看到什么。
+        若涉及 LLM 行为（巩固/蒸馏/实体抽取失败），附 `llm_audit_logs` 对应行的 error_message 更好。
+        / Minimal repro path. For LLM-pipeline failures, the error_message from llm_audit_logs helps a lot.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为 / Expected behavior
+    validations:
+      required: false
+
+  - type: textarea
+    id: env
+    attributes:
+      label: 环境 / Environment
+      value: |
+        - dsh-mneme 版本 / plugin version:
+        - DSH 桌面端版本与通道（stable / Beta / NEXT）/ DSH version & channel:
+        - 操作系统 / OS:
+        - Node 版本 / Node version:
+        - 安装方式 / install method (npm / dsh-market):
+        - 相关路由模型（巩固/蒸馏/实体抽取用的是什么模型）/ relevant model routes:
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / Logs
+      description: 控制台报错、dream_runs / llm_audit_logs 记录片段。注意脱敏，不要贴 token 与记忆正文。
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: 披露 / Disclosure
+      options:
+        - label: 本报告由 AI 辅助整理（人工审核后提交）/ Drafted with AI assistance, reviewed by a human
+          required: false

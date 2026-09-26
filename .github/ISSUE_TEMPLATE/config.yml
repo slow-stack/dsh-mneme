@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & Ideas（问答与方向讨论）
+    url: https://github.com/slow-stack/mneme/discussions
+    about: 使用问题（如「如何临时关闭记忆」）、配置咨询、方向性想法请发 Discussions 的 Q&A / Ideas 分类 — usage questions and direction-level ideas go to Discussions
+  - name: 🔒 Security vulnerabilities（安全漏洞）
+    url: https://github.com/slow-stack/mneme/security/advisories/new
+    about: 请勿公开发布安全漏洞，走 GitHub 私密安全通告 — do not open public issues for security reports
