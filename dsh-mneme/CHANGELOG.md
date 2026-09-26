@@ -79,6 +79,8 @@
 
 ## 🆕 新增
 
+- **蒸馏思考强度设置项（issue #315）**：蒸馏（会话总结提炼）LLM 新增 `summarizeReasoningEffort`（`off`/`low`/`medium`/`high`/`none`，默认 `none` = 不发送字段、服务商默认生效，行为与此前一致）。思考型模型蒸馏时推理会烧光输出预算、总结为空或截断（#9 同款失败面，此前仅巩固/睡眠/实体抽取三链路有档位控制），配 `off`/`low` 可封顶推理。档位被模型拒收时自动去掉字段重试一次（与巩固/睡眠同一降级策略，`withEffortFallback` 共享、拒收判别式 `EFFORT_REJECT_RE` 提为单一来源）；面板「功能开关 → 自动总结」下新增档位下拉（opt-in 语义与实体抽取 `entityExtractionReasoning` 对齐，settings 白名单注册）。新增回归 5 条（`test/summarize-reasoning-effort.test.js`）。
+
 - **压缩边缘双落点（issue #249 N3）**：上下文即将被宿主压缩前抢救「正在做什么」，新增
   opt-in 键 `continuityRescueEnabled`（注入父开关 `autoInject` 的子项，默认关；`lightMode`
   强制关）。**必须是双落点**：①落一条连续性提案到新表 `continuity_proposals`（脱离对话

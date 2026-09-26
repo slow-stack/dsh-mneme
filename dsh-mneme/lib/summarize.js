@@ -1,5 +1,9 @@
 import { BlockAssembler, createUserMessage } from "@deepseek-ai/dsh-llm";
 import { STR, langOf } from "./lang.js";
+// Issue #315：蒸馏链路的 effort 降级复用巩固侧的 withEffortFallback（拒绝
+// 重试一次不带 effort 字段）与 describeStreamFailure（流失败原因归一）——
+// 三条链路同一降级语义，不另造第二份实现。
+import { withEffortFallback, describeStreamFailure, EFFORT_REJECT_RE } from "./dream.js";
 
 // 编码记忆蒸馏 prompt（codingRetrospect 开启时启用）：在通用记忆之外，额外提取
 // 三类编码专属记忆，专治重复踩坑 / 遗忘被否决方案 / 丢失工程约束。字段仍沿用
@@ -584,6 +588,11 @@ export function createSummarizer(ctx, service, config, deps = {}) {
         };
       }
 
+      // Issue #315：蒸馏思考强度。'none'/未配置都不发送字段（服务商默认生效，
+      // 行为与历史版本一致）；off/low/medium/high 原样传递。
+      const summarizeEffort = config.summarizeReasoningEffort;
+      const withEffort = typeof summarizeEffort === "string" && summarizeEffort !== "none";
+
       const options = {
         provider: route.provider,
         model: route.model,
@@ -597,15 +606,26 @@ export function createSummarizer(ctx, service, config, deps = {}) {
       // 智能调速器：整段蒸馏 LLM 调用进全局串行队列，按间隔分批放行；429 时
       // 指数退避自动重试，全程对用户透明，不把 429 错误码直接抛出去。
       const intervalMs = config.distillRateLimitIntervalMs ?? 1000;
-      const { text, assembledText, aborted } = await enqueueDistill(async () => {
+      // Issue #315：流式失败原因暂存槽。蒸馏的流失败以 aborted 结果而非 throw
+      // 返回，withEffortFallback 靠它甄别「effort 被拒收」型 aborted（dream 侧
+      // runNarratives 的 streamFailure 同款模式）。
+      let streamFailure = "";
+      const runDistill = (withEffort) => {
+        streamFailure = "";
+        return enqueueDistill(async () => {
         const retries = config.distillRateLimitRetries ?? 3;
         const baseDelayMs = config.distillRateLimitBaseDelayMs ?? 1000;
+        // 每次尝试独立拼 effort 字段：降级重试（withEffort=false）必须真的
+        // 不带 reasoningEffort，不能复用带字段的同一 options 对象。
+        const callOptions = withEffort && summarizeEffort
+          ? { ...options, reasoningEffort: summarizeEffort }
+          : options;
         for (let attempt = 0; ; attempt++) {
           const assembler = new BlockAssembler();
           let text = "";
           let aborted = false;
           try {
-            for await (const chunk of ctx.llm.stream(options)) {
+            for await (const chunk of ctx.llm.stream(callOptions)) {
               if (STREAM_CHUNK_TYPES.has(chunk.type)) assembler.push(toProtocolChunk(chunk));
               if (chunk.type === "text-delta") {
                 text += chunk.text ?? chunk.delta ?? "";
@@ -627,6 +647,9 @@ export function createSummarizer(ctx, service, config, deps = {}) {
                   if (isRateLimited(chunk.reason ?? chunk)) {
                     throw Object.assign(new Error("rate limited"), { status: 429 });
                   }
+                  // Issue #315：把失败原因原样留给外层的 effort 甄别
+                  // （withEffortFallback 只认「effort 被拒收」型失败）。
+                  streamFailure = describeStreamFailure(chunk.reason ?? chunk);
                   if (audit) {
                     audit.status = "error";
                     audit.errorMessage = `llm stream ${reasonKind}`;
@@ -666,6 +689,21 @@ export function createSummarizer(ctx, service, config, deps = {}) {
           }
         }
       }, intervalMs);
+      };
+      // Issue #315：effort 被拒收时自动去掉字段重试一次（dream/sleep/entity
+      // 同一降级策略，withEffortFallback 共享）。蒸馏的流失败以 aborted 结果
+      // 而非 throw/undefined 返回，因此甄别在这里做：effort 型失败折叠成
+      // undefined，让 withEffortFallback 走 streamFailure 甄别分支触发重试；
+      // 非 effort 的 aborted 原样返回，仍走既有的 abortedRun 路径。
+      const result = await withEffortFallback(
+        ctx,
+        summarizeEffort,
+        () => runDistill(withEffort).then((r) =>
+          (r?.aborted && EFFORT_REJECT_RE.test(streamFailure)) ? undefined : r),
+        () => runDistill(false),
+        () => streamFailure
+      );
+      const { text, assembledText, aborted } = result ?? { text: "", assembledText: "", aborted: true };
       if (aborted) {
         abortedRun = true;
         return;

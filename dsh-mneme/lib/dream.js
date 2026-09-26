@@ -341,6 +341,9 @@ async function runAuditedLlm(ctx, service, config, spec, body) {
  * accepted → reasoning capped; rejected → provider default (old behavior),
  * logged so the rejection is observable.
  */
+// Issue #315：effort 拒收判别式的单一来源。summarize 的流失败以 aborted 结果
+// 返回，需在折叠成 undefined 前用同一甄别（各处手写会漂移）。
+export const EFFORT_REJECT_RE = /reasoning[\s_]*effort|UNSUPPORTED_REASONING_EFFORT/i;
 async function withEffortFallback(ctx, effort, attempt, fallback, getStreamError) {
   if (!effort || effort === "none") return attempt();
   try {
@@ -351,7 +354,7 @@ async function withEffortFallback(ctx, effort, attempt, fallback, getStreamError
       // on the chunk's failure reason here or the retry below is dead code
       // for the stream path.
       const reason = String(getStreamError?.() ?? "");
-      if (/reasoning[\s_]*effort|UNSUPPORTED_REASONING_EFFORT/i.test(reason)) {
+      if (EFFORT_REJECT_RE.test(reason)) {
         ctx.logger?.warn?.(`dsh-mneme dream: reasoningEffort "${effort}" rejected via stream (${reason}); retrying without it`);
         return fallback();
       }
@@ -361,7 +364,7 @@ async function withEffortFallback(ctx, effort, attempt, fallback, getStreamError
     const message = String(error?.message ?? error);
     // matches both "reasoning effort" (natural language) and the bare
     // "UNSUPPORTED_REASONING_EFFORT" error code (underscore).
-    if (!/reasoning[\s_]*effort/i.test(message)) throw error;
+    if (!EFFORT_REJECT_RE.test(message)) throw error;
     ctx.logger?.warn?.(`dsh-mneme dream: reasoningEffort "${effort}" rejected (${message}); retrying without it`);
     return fallback();
   }

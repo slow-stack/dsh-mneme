@@ -397,6 +397,12 @@ window.__ModuleLoader__.load({
         "memory.features.entityExtractionReasoning.low": "低",
         "memory.features.entityExtractionReasoning.medium": "中",
         "memory.features.entityExtractionReasoning.high": "高",
+        "memory.features.summarizeReasoningEffort": "蒸馏思考强度",
+        "memory.features.summarizeReasoningEffort.none": "跟随默认",
+        "memory.features.summarizeReasoningEffort.low": "低",
+        "memory.features.summarizeReasoningEffort.medium": "中",
+        "memory.features.summarizeReasoningEffort.high": "高",
+        "memory.features.summarizeReasoningEffort.hint": "思考型模型建议选低档，避免推理烧光输出预算导致总结失败；改后重启 DSH 生效",
         "memory.features.entityExtractionModelHint": "Provider/模型留空 = 跟随主对话模型；思考强度 none = 服务商默认",
         "memory.features.codingRetrospect": "编码记忆蒸馏",
         "memory.features.codingRetrospect.hint": "用完整转录（含工具调用与报错）提炼踩坑、约束与被否决方案",
@@ -787,6 +793,12 @@ window.__ModuleLoader__.load({
         "memory.features.entityExtractionReasoning.low": "Low",
         "memory.features.entityExtractionReasoning.medium": "Medium",
         "memory.features.entityExtractionReasoning.high": "High",
+        "memory.features.summarizeReasoningEffort": "Distill reasoning effort",
+        "memory.features.summarizeReasoningEffort.none": "Follow default",
+        "memory.features.summarizeReasoningEffort.low": "Low",
+        "memory.features.summarizeReasoningEffort.medium": "Medium",
+        "memory.features.summarizeReasoningEffort.high": "High",
+        "memory.features.summarizeReasoningEffort.hint": "Prefer low for thinking models so reasoning cannot drain the output budget; takes effect after a DSH restart",
         "memory.features.entityExtractionModelHint": "Provider / model empty = follow the main conversation model; reasoning none = provider default",
         "memory.features.codingRetrospect": "Coding retrospection",
         "memory.features.codingRetrospect.hint": "Distill pitfalls, constraints and rejected solutions from full transcripts (tools and errors included)",
@@ -1949,7 +1961,8 @@ window.__ModuleLoader__.load({
     const FEATURE_STRINGS = ["dreamProvider", "dreamModel", "sleepProvider", "sleepModel", "entityExtractionProvider", "entityExtractionModel", "localEmbedModel", "ollamaBaseUrl", "ollamaModel"];
     const EMBED_PROVIDERS = ["openai", "local", "ollama"];
     // 实体抽取思考强度（issue #109）：与后端 FEATURE_FLAG_ENUMS 枚举对齐。
-    const ENTITY_REASONING = ["none", "low", "medium", "high"];
+    // #315 起蒸馏思考强度共用同一组档位（后端枚举多一个 off，一样可发）。
+    const REASONING_OPTIONS = ["none", "low", "medium", "high"];
 
     function FeatureRow({ name, hint, on, disabled, onToggle, sub }) {
       return h("div", { className: "mneme-featrow", style: sub ? { paddingLeft: 18, opacity: 0.86 } : undefined },
@@ -2230,9 +2243,26 @@ window.__ModuleLoader__.load({
             disabled: busy,
             onChange: (e) => put({ entityExtractionReasoning: e.target.value })
           },
-            ENTITY_REASONING.map((r) => h("option", { key: r, value: r }, t(`memory.features.entityExtractionReasoning.${r}`))))
+            REASONING_OPTIONS.map((r) => h("option", { key: r, value: r }, t(`memory.features.entityExtractionReasoning.${r}`))))
         ),
         h("div", { className: "mneme-featsubhint" }, t("memory.features.entityExtractionModelHint"))
+      );
+
+      // 蒸馏思考强度（issue #315）：autoSummarize 开着才展开，档位与实体抽取
+      // 同款枚举下拉、即时提交。蒸馏没有独立 provider/model 路由键（跟随会话
+      // 头或 config 文件的 summarizeProvider/summarizeModel），不上连通性测试。
+      const summarizeSub = eff.autoSummarize && h("div", { className: "mneme-featsub" },
+        h("div", { className: "mneme-featnum" },
+          h("span", { className: "mneme-featnumlabel" }, t("memory.features.summarizeReasoningEffort")),
+          h("select", {
+            className: "mneme-select",
+            value: eff.summarizeReasoningEffort || "none",
+            disabled: busy,
+            onChange: (e) => put({ summarizeReasoningEffort: e.target.value })
+          },
+            REASONING_OPTIONS.map((r) => h("option", { key: r, value: r }, t(`memory.features.summarizeReasoningEffort.${r}`))))
+        ),
+        h("div", { className: "mneme-featsubhint" }, t("memory.features.summarizeReasoningEffort.hint"))
       );
 
       if (error && !state) return h("section", { className: "mneme-set-card" },
@@ -2252,6 +2282,7 @@ window.__ModuleLoader__.load({
               FEATURE_GROUPS.map((g) => h(react.Fragment, { key: g.key },
                 h("div", { className: "mneme-featgroup" }, t(`memory.features.${g.key}`)),
                 g.items.map(flagRow),
+                g.key === "group.core" && h(react.Fragment, null, summarizeSub),
                 g.key === "group.enhance" && h(react.Fragment, null, embedSub, entitySub),
                 g.key === "group.dream" && h(react.Fragment, null, dreamSub, sleepSub)
               )),

@@ -48,11 +48,17 @@ test("issue#135: reasoningEffort unset = undefined (auto-lowest at resolve time)
   const cfg = Config({});
   assert.equal(cfg.dreamReasoningEffort, undefined, "unset must be distinguishable from explicit 'none'");
   assert.equal(cfg.sleepReasoningEffort, undefined);
+  // issue #315: the distill knob defaults to 'none' (entity-extraction shape,
+  // no auto-lowest resolution — distill keeps its current behavior until the
+  // user opts in).
+  assert.equal(cfg.summarizeReasoningEffort, "none", "distill effort defaults to 'none'");
+  assert.equal(Config({ summarizeReasoningEffort: "off" }).summarizeReasoningEffort, "off");
   assert.equal(Config({ dreamReasoningEffort: "none" }).dreamReasoningEffort, "none", "explicit 'none' kept");
   assert.equal(Config({ dreamReasoningEffort: "off" }).dreamReasoningEffort, "off", "'off' now a valid explicit choice");
   assert.equal(Config({ sleepReasoningEffort: "medium" }).sleepReasoningEffort, "medium");
   assert.throws(() => Config({ dreamReasoningEffort: "bogus" }), "invalid effort rejected");
   assert.throws(() => Config({ sleepReasoningEffort: "ultra" }), "invalid effort rejected");
+  assert.throws(() => Config({ summarizeReasoningEffort: "max" }), "invalid distill effort rejected");
 });
 
 // ---------------------------------------------------------------- dream passthrough

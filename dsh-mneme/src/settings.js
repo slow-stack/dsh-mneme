@@ -172,6 +172,9 @@ const FEATURE_FLAG_ENUMS = {
   recallFusion: ["blend", "rrf", "minmax"],
   // 实体抽取思考强度（issue #109）：与 dreamReasoningEffort 枚举对齐。
   entityExtractionReasoning: ["low", "medium", "high", "none"],
+  // 蒸馏思考强度（issue #315）：与 entityExtractionReasoning 枚举对齐，
+  // 多一个 off（显式关思考，思考型模型蒸馏防推理烧预算）。
+  summarizeReasoningEffort: ["off", "low", "medium", "high", "none"],
   // Issue #127：落库前去重档位（off 默认，等同现状）。
   summarizeDedupeMode: ["off", "title", "vector"],
   // Issue #126：sleep 冲突阶段的动作集（conflict 默认 = 现状；full = 六分支）。

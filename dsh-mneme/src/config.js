@@ -492,6 +492,23 @@ export const Config = z.object({
     z.const("high"),
     z.const("none")
   ]).description("同 dreamReasoningEffort：sleep 各阶段 LLM 的推理档位，未配置 = 自动取模型支持的最低档；显式 'none' = 不发送字段、用服务商自带默认。"),
+  // Pass-through reasoning effort for the distill (summarize) LLM call
+  // (issue #315). Mirrors entityExtractionReasoning rather than dream: the
+  // default 'none' omits the field entirely (provider default), so current
+  // behavior is unchanged until the user opts in — no auto-lowest resolution
+  // here, distill failures are retried at the window level anyway. off/low/
+  // medium/high are forwarded verbatim; a provider that rejects the effort
+  // retries once without it (withEffortFallback), so opting in is safe to
+  // experiment with. The failure being addressed is the #9 shape on the
+  // distill path: a thinking model drains the output budget on reasoning and
+  // the summary comes back empty/truncated.
+  summarizeReasoningEffort: z.union([
+    z.const("off"),
+    z.const("low"),
+    z.const("medium"),
+    z.const("high"),
+    z.const("none")
+  ]).default("none").description("蒸馏（会话总结提炼）LLM 的推理档位：默认 'none' = 不发送字段、用服务商自带默认；off/low/medium/high 原样传递，被模型拒收时自动去掉字段重试一次（与巩固/睡眠同款降级，#315）。思考型模型建议 off/low，避免推理烧光输出预算。"),
   // Issue #257：sleep 冲突/模式两阶段的输出预算（原硬编码 2048）。实测默认档
   // 每对裁决约 90 token、24 对 2097——2048 恰好压在边界（53 次运行 48 败）；
   // full 档六分支实测约 290 token/对、24 对 6967，2048 必然截断。默认 8192

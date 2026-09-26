@@ -665,8 +665,8 @@ test("GET /api/dsh-mneme/features returns empty overrides and effective config d
   // documentInjectBudget、issue #249 第一批新增 injectGuidanceEnabled/
   // pinnedInjectBudget、issue #249 N3 新增 continuityRescueEnabled，
   // v0.8.5 新增 disableMemorySearch/disableMemoryArchive，
-  // 本地嵌入池化新增 localEmbedPooling）
-  assert.equal(Object.keys(data.effective).length, 59 + 3 + 2 + 1 + 2 + 2 + 2 + 1 + 1);
+  // 本地嵌入池化新增 localEmbedPooling，issue #315 新增 summarizeReasoningEffort）
+  assert.equal(Object.keys(data.effective).length, 59 + 3 + 2 + 1 + 2 + 2 + 2 + 1 + 1 + 1);
   assert.equal(data.effective.dreamSkipInvalid, true);
   assert.equal(data.effective.allowCrossTypeMerge, false);
   assert.equal(data.effective.dreamMinIntervalMinutes, 0);
@@ -696,6 +696,8 @@ test("GET /api/dsh-mneme/features returns empty overrides and effective config d
   assert.equal(data.effective.entityExtractionProvider, "");
   assert.equal(data.effective.entityExtractionModel, "");
   assert.equal(data.effective.entityExtractionReasoning, "none");
+  // issue #315：蒸馏思考强度（默认 none = 不发送字段，行为不变）
+  assert.equal(data.effective.summarizeReasoningEffort, "none");
   // issue #127：summarize 节流五键（均有默认值，故计入 effective 计数）
   assert.equal(data.effective.summarizeMinIntervalMinutes, 0);
   assert.equal(data.effective.summarizeMaxEntriesPerRun, 0);
