@@ -81,6 +81,8 @@
 
 - **双 README 重复徽章行去重**：9-24 合并提交（37e77f1，解 #275 车道与 main 的冲突）把 tests 徽章行与中英 `npm test` 命令注释各复制了一份，根 README 三处、包内 README 两处重复；`badge:sync` 的全文正则替换只会把重复行一起刷新、永不自愈，此番手工去重（各留一行）。
 
+- **GitHub issue 模板三件套（PR #321）**：`.github/ISSUE_TEMPLATE/` 新增 bug.yml / feature.yml（YAML forms，双语，环境字段对齐历史高质量报告）与 config.yml（空白 issue 关闭，使用问题引导 Discussions，安全漏洞引导私密通告）；feature 模板内置实现口径自查项与 AI 辅助披露项，把仓库闸门前置到提案阶段。
+
 ## 🆕 新增
 
 - **autoDream 连续失败退避（issue #292，#135 派生）**：新增 opt-in 键
@@ -100,6 +102,18 @@
   API 与工具面 / 运行时），每键给默认值、作用与开启后果/冲突；lightMode 联动键显式
   标注（文末附 `LIGHT_MODE_OFF` 完整清单），opt-in 默认关的键可见即知，与 settings.js
   白名单的对应关系在页首一句话交代。两个 README 的文档索引各加一行链接。
+
+- **巩固错峰队列（issue #239 第 4 项镜像到 dream，PR #320）**：`dreamPeakHours`（与
+  `summarizePeakHours` 同一份时段语法：逗号分隔、支持跨零点、星期前缀 `mon-fri`）+
+  `dreamPeakMaxDeferMinutes`（默认 120）。命中高峰时巩固不调模型——登记一行
+  `status='skipped'` / `error_message='peak-hours'` 审计并择时补跑；baseline 刻意不刷新
+  （阈值继续累积，非高峰一次大 run 比多次小 run 省）；被上限截断后到点仍处高峰则照跑，
+  长高峰不会把巩固饿死；任一写法非法整串按「未配置」处理——宁可不省也不误停。时段解析
+  三件套（`parsePeakSpec` / `isInPeakWindow` / `nextOffPeakAt`）抽到零依赖模块
+  `src/peak-hours.js`，summarize 侧 import + re-export 兼容调用方零改动——#316 之后
+  summarize 反向依赖 dream（`withEffortFallback`），dream 再 import summarize 会成真
+  循环（PR #320 review 发现并顺手修复，原注释「无循环依赖」为过时事实）。新增回归
+  （`test/dream-peak-hours.test.js`，注入时钟，同 summarize 侧房型）。
 
 - **蒸馏思考强度设置项（issue #315）**：蒸馏（会话总结提炼）LLM 新增 `summarizeReasoningEffort`（`off`/`low`/`medium`/`high`/`none`，默认 `none` = 不发送字段、服务商默认生效，行为与此前一致）。思考型模型蒸馏时推理会烧光输出预算、总结为空或截断（#9 同款失败面，此前仅巩固/睡眠/实体抽取三链路有档位控制），配 `off`/`low` 可封顶推理。档位被模型拒收时自动去掉字段重试一次（与巩固/睡眠同一降级策略，`withEffortFallback` 共享、拒收判别式 `EFFORT_REJECT_RE` 提为单一来源）；面板「功能开关 → 自动总结」下新增档位下拉（opt-in 语义与实体抽取 `entityExtractionReasoning` 对齐，settings 白名单注册）。新增回归 5 条（`test/summarize-reasoning-effort.test.js`）。
 
